@@ -1,6 +1,7 @@
+.azureml
+
 # https://www.toptal.com/developers/gitignore/api/powershell
 # https://www.toptal.com/developers/gitignore/api/python
-
 ### PowerShell ###
 # Exclude packaged modules
 *.zip
