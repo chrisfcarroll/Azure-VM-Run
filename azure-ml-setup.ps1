@@ -5,6 +5,7 @@ Param(
   [string]$workspaceName,
   [string]$location,
   [string]$experimentName=(Split-Path (Get-Location) -Leaf)
+  [ValidateSet('nc6','nc12','nc24','nc6v3','nc12v3','nc24v3',),][string]$vmSize='nc6'
 )
 # ----------------------------------------------------------------------------
 function Ask-YesNo($msg){return ($Host.UI.PromptForChoice("Confirm",$msg, ("&Yes","&No"),1) -eq 0)}
@@ -17,7 +18,39 @@ This script will go through steps in
 https://docs.microsoft.com/en-us/azure/machine-learning/reference-azure-machine-learning-cli
 needed to set up and use compute targets for training a model.
 "
+# ----------------------------------------------------------------------------
+if(-not $resourceGroupName -and -not $workspaceName)
+{
 
+  "
+  What is needed to create, use, and tear down cloud-based ML training resources?
+
+  1. All resources are 'kept' together in a ResourceGroup. A ResourceGroup is just a
+  management convenience, tied to a location, but costing nothing.
+ 
+  2. In the resourceGroup, you must create a Workspace. This will allocate some storage, and
+  an unused workspace will cost you around `$1 per day. It may take a couple of minutes to
+  create, and slightly less time to delete.
+
+  3. Within the workspace, you create compute instances or compute clusters. Clusters Scalesets have
+  the advantage of auto-scaling down to 0 nodes–i.e. no cost—when not in use.
+
+  Optionally: 
+
+  -Add storage to your workspace. This storage can be shared across computeinstances 
+  in the workspace.
+
+  -Attach a local folder on your desktop to the workspace.
+
+  Usage:
+
+    $PSCommandPath [-resourceGroupName] <name> [-workspaceName] <name> [-location <name>]
+  "
+}
+
+  $PSScriptRooT
+
+# ----------------------------------------------------------------------------
 "
 1. Check az CLI is installed"
 $azcli=(Get-Command az -ErrorAction SilentlyContinue)
@@ -103,12 +136,22 @@ if($workspaceName){
   "
   exit
 }
+"✅ OK"
 
+# ----------------------------------------------------------------------------
+"
+5. Create a new computeinstance
+"
+az ml computetarget create amlcompute -n cpu --min-nodes 1 --max-nodes 1 -s $vmSize
 
 # ----------------------------------------------------------------------------
 
 "
-5. Attach the current folder to the workspace $workspaceName in resource group $resourceGroupName
+6. Attach an Azure blob container as a Datastore.
+"
+# ----------------------------------------------------------------------------
+"
+7. Attach the current folder to the workspace $workspaceName in resource group $resourceGroupName
 
 Your current path is $(Get-Location)
 Your experimentName is $experimentName"
@@ -124,14 +167,11 @@ if(test-path ".azureml/"){
 }
 
 "✅ OK"
-
 # ----------------------------------------------------------------------------
 "
-6. Attach an Azure blob container as a Datastore.
-7. Upload files to a Datastore.
-8. Scaffold and register an Environment 
-8. Create a new computeinstance
-9. Start a computeinstance and run an experiment
+8. Upload files to a Datastore.
+9. Scaffold and register an Environment 
+10. Start a computeinstance and run an experiment
 "
 
 #az ml environment scaffold -n myenv -d myenvdirectory
