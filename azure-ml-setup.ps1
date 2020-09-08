@@ -3,9 +3,12 @@
 Param(
   [string]$resourceGroupName,
   [string]$workspaceName,
-  [string]$location,
+  [string]$computeTargetName,
+  [ValidateSet('nc6','nc12','nc24','nc6v3','nc12v3','nc24v3','nc6promo','nc12promo','nc24promo')]
+    [string]$computeTargetSize='nc6',
   [string]$experimentName= (Split-Path (Get-Location) -Leaf),
-  [ValidateSet('nc6','nc12','nc24','nc6v3','nc12v3','nc24v3')][string]$vmSize='nc6'
+  [ValidateScript({Test-Path $_ -PathType 'Leaf'})][string]$datasetDefinitionFile,
+  [string]$location
 )
 # ----------------------------------------------------------------------------
 function Ask-YesNo($msg){return ($Host.UI.PromptForChoice("Confirm",$msg, ("&Yes","&No"),1) -eq 0)}
@@ -18,6 +21,12 @@ function Ask-YesElseThrow($msg){
 This script will go through steps in 
 https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
 needed to set up and use compute targets for training a model.
+
+Show me the GUI?
+
+The GUI way to do this is at https://ml.azure.com, which will take you through
+similar steps as this script.
+
 "
 # ----------------------------------------------------------------------------
 $commandName=(Split-Path $PSCommandPath -Leaf)
@@ -45,21 +54,19 @@ if(-not $resourceGroupName -and -not $workspaceName)
   may take a couple of minutes to create, and slightly less time to delete.
 
   4. Within the workspace, you create compute instances or compute clusters. 
-  Clusters have the advantage of auto-scaling down to 0 nodes–i.e. no cost—
+  Clusters have the advantage they can auto-scale down to 0 nodes–i.e. no cost—
   when idle.
 
   Optionally: 
 
   5. Attach a local folder on your desktop to the workspace.
 
-  6. Attach an Azure blob container as a Datastore. This storage can be shared across 
-  computeinstances in the workspace.
+  6. Define a dataset
 
-  Not covered by this script:
-
-  7. Upload data to your Datastore
-  8. Create and manage Environments
-  9. Start a compute instance and run your experiment
+  7. Attach an Azure blob container as a Datastore for large datasets
+  8. Upload files to a Datastore
+  9. Scaffold and register Environments
+  10. Start a computetarget and run an experiment
 
   For these final steps you want an example or a tutorial, not a script.
 
@@ -161,9 +168,41 @@ if($workspaceName){
 
 # ----------------------------------------------------------------------------
 "
-4. Create a new computeinstance
-"
-az ml computetarget create amlcompute -n cpu --min-nodes 1 --max-nodes 1 -s $vmSize
+4. Choose or Create a computetarget $computeTargetName"
+
+if($computeTargetName ){
+  az ml computetarget show --output table `
+            --name $computeTargetName -w $workspaceName -g $resourceGroupName
+  if(-not $?){
+    "4.1 Create computetarget $computeTargetName of size $($computeTargetSize)? 
+    (This will be created with min-nodes=0 and max-nodes=1 so it will be free when not in use)"
+
+    Ask-YesElseThrow
+    az ml computetarget create amlcompute -n $computeTargetName --min-nodes 0 --max-nodes 1 `
+        --vm-size Standard_$computeTargetSize -w $workspaceName -g $resourceGroupName
+
+    if(-not $?){
+      throw "failed at az ml computetarget create amlcompute 
+        -n computeTargetName --min-nodes 0 --max-nodes 1 
+        --vm-size Standard_$computeTargetSize -w $workspaceName -g $resourceGroupName"
+    }
+  }
+}else{
+  "You current have these computetargets in $workspaceName in $resourceGroupName"
+  $r=(az ml computetarget list -w $workspaceName -g $resourceGroupName --output table)
+  $r
+  if(-not $r){"-- none --"}
+  "
+  Create a new computetarget by specifying `$computeTargetName and optional 
+  `$computeTargetSize.
+  • Size will default to 'nc6'
+  • It will be created with min-nodes=0 and max-nodes=1, so it will be free when not in use
+  "
+  write-warning "Halted at step 4. Create a computetarget.
+  "
+  exit
+}
+"✅ OK" 
 
 # ----------------------------------------------------------------------------
 
@@ -185,13 +224,62 @@ if(test-path ".azureml/"){
 
 "✅ OK"
 # ----------------------------------------------------------------------------
-"6. Attach an Azure blob container as a Datastore.
+
 "
+6. Define a dataset $datasetDefinitionFile"
+
+if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
+  "Registering dataset defined by $datasetDefinitionFile"
+  az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName 
+  if(-not $?){throw "failed at az ml dataset register -f $datasetDefinitionFile --skip-validation"}
+}
+else{
+  "
+  You have not provided a dataset json file. Would you like to create and register 
+  a small example dataset.json file? (It will use the mnist 10k dataset)
+  "
+  if(Ask-YesNo){
+      if(-not $datasetDefinitionFile){$datasetDefinitionFile="dataset-Example.json"}
+      
+      '{
+          "datasetType": "File",
+          "parameters": {
+            "path": [
+              "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz",
+              "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz",
+              "http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz",
+              "http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz"
+            ]
+          },
+          "registration": {
+            "createNewVersion": true,
+            "description": "mnist dataset",
+            "name": "mnist-dataset",
+            "tags": {
+              "sample-tag": "mnist"
+            }
+          },
+          "schemaVersion": 1
+        }' > $datasetDefinitionFile
+
+    Get-Content $datasetDefinitionFile
+
+    az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName
+    if(-not $?){throw "failed at az ml dataset register -f $($datasetDefinitionFile) --skip-validation  -w $workspaceName -g $resourceGroupName"}
+
+  }else{
+    "Skipped Step 6. Define a dataset
+    "
+  }
+}
+
+"✅ OK"
 # ----------------------------------------------------------------------------
 "
-7. Upload files to a Datastore.
-8. Scaffold and register Environments
-9. Start a computeinstance and run an experiment
+7. Attach an Azure blob container as a Datastore for large datasets
+8. Upload files to a Datastore.
+9. Scaffold and register Environments
+10. Start a computetarget and run an experiment
 "
 
 #az ml environment scaffold -n myenv -d myenvdirectory

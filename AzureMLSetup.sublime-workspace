@@ -4,16 +4,60 @@
 		"selected_items":
 		[
 			[
-				"resou",
-				"resourceGroupName"
+				"data",
+				"datasetjsonpath"
 			],
 			[
-				"comp",
-				"computeinstances"
+				"dat",
+				"datasetjsonpath"
+			],
+			[
+				"compute",
+				"computetarget"
+			],
+			[
+				"com",
+				"computeTargetSize"
 			],
 			[
 				"compu",
-				"compute"
+				"computeTargetName"
+			],
+			[
+				"speci",
+				"specifying"
+			],
+			[
+				"Compute",
+				"computetargets"
+			],
+			[
+				"comp",
+				"computetarget"
+			],
+			[
+				"work",
+				"workspaceName"
+			],
+			[
+				"wor",
+				"workspaceName"
+			],
+			[
+				"exp",
+				"experiment"
+			],
+			[
+				"environ",
+				"Environment"
+			],
+			[
+				"resou",
+				"resourceGroup"
+			],
+			[
+				"comm",
+				"commandName"
 			],
 			[
 				"Reou",
@@ -24,16 +68,8 @@
 				"experimentName"
 			],
 			[
-				"exp",
-				"experimentName"
-			],
-			[
 				"res",
 				"resourceGroupName"
-			],
-			[
-				"work",
-				"workspaceName"
 			],
 			[
 				"az",
@@ -376,6 +412,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"NC6",
+			"NC",
+			"computeinstance",
 			"\"size\": \"NC",
 			"\"size\": \"N",
 			"\"name\": \"n",
@@ -402,6 +441,7 @@
 		"regex": true,
 		"replace_history":
 		[
+			"computetarget",
 			" per hr",
 			"per hr",
 			"",
@@ -508,7 +548,7 @@
 	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 167.0,
+	"side_bar_width": 230.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
