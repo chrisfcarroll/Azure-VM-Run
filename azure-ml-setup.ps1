@@ -232,44 +232,48 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
   "Registering dataset defined by $datasetDefinitionFile"
   az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName 
   if(-not $?){throw "failed at az ml dataset register -f $datasetDefinitionFile --skip-validation"}
-}
-else{
-  "
-  You have not provided a dataset json file. Would you like to create and register 
-  a small example dataset.json file? (It will use the mnist 10k dataset)
-  "
-  if(Ask-YesNo){
-      if(-not $datasetDefinitionFile){$datasetDefinitionFile="dataset-Example.json"}
-      
-      '{
-          "datasetType": "File",
-          "parameters": {
-            "path": [
-              "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz",
-              "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz",
-              "http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz",
-              "http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz"
-            ]
-          },
-          "registration": {
-            "createNewVersion": true,
-            "description": "mnist dataset",
-            "name": "mnist-dataset",
-            "tags": {
-              "sample-tag": "mnist"
-            }
-          },
-          "schemaVersion": 1
-        }' > $datasetDefinitionFile
-
-    Get-Content $datasetDefinitionFile
-
-    az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName
-    if(-not $?){throw "failed at az ml dataset register -f $($datasetDefinitionFile) --skip-validation  -w $workspaceName -g $resourceGroupName"}
-
+}else{
+  $mldatasetlist=(az ml dataset list -g MLLearn -w ML1 ) -join [System.Environment]::NewLine
+  $existingDatasets=(ConvertFrom-Json $mldatasetlist -NoEnumerate)
+  if($existingDatasets.Length -gt 0){
+    $mldatasetlist
   }else{
-    "Skipped Step 6. Define a dataset
     "
+    You have not provided a dataset json file. Would you like to create and register 
+    a small dataset-Example.json file? (It will use the mnist 10k dataset)
+    "
+    if(Ask-YesNo){
+        if(-not $datasetDefinitionFile){$datasetDefinitionFile="dataset-Example.json"}
+        
+        '{
+            "datasetType": "File",
+            "parameters": {
+              "path": [
+                "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz",
+                "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz",
+                "http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz",
+                "http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz"
+              ]
+            },
+            "registration": {
+              "createNewVersion": true,
+              "description": "mnist dataset",
+              "name": "mnist-dataset",
+              "tags": {
+                "sample-tag": "mnist"
+              }
+            },
+            "schemaVersion": 1
+          }' > $datasetDefinitionFile
+
+      Get-Content $datasetDefinitionFile
+
+      az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName
+      if(-not $?){throw "failed at az ml dataset register -f $($datasetDefinitionFile) --skip-validation  -w $workspaceName -g $resourceGroupName"}
+    }else{
+      "Skipped Step 6. Define a dataset
+      "
+    }
   }
 }
 
