@@ -1,5 +1,20 @@
 #! /usr/bin/env pwsh
 # ----------------------------------------------------------------------------
+<#
+.Description
+Azure-ml-setup.ps1
+• This script will go through steps in 
+  https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
+  needed to set up and use compute targets for training a model.
+
+  You can use the script to the very end, or just use parts of it.
+
+• Show me the GUI?
+  The GUI way to do this is at https://ml.azure.com, which will take you through
+  similar initial steps as this script. 
+  You can also use the GUI as a dashboard, to see that what the script does
+  appears as expected in your azure account.
+#>
 Param(
   [string]$resourceGroupName,
   [string]$workspaceName,
@@ -18,14 +33,18 @@ function Ask-YesElseThrow($msg){
 # ----------------------------------------------------------------------------
 # don't use https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
 "
-This script will go through steps in 
-https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
-needed to set up and use compute targets for training a model.
+• This script will go through steps in 
+  https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
+  needed to set up and use compute targets for training a model.
 
-Show me the GUI?
+  You can use the script to the very end, or just use parts of it.
 
-The GUI way to do this is at https://ml.azure.com, which will take you through
-similar steps as this script.
+• Show me the GUI?
+
+  The GUI way to do this is at https://ml.azure.com, which will take you through
+  similar initial steps as this script. 
+  You can also use the GUI as a dashboard, to see that what the script does
+  appears as expected in your azure account.
 
 "
 # ----------------------------------------------------------------------------
@@ -63,10 +82,12 @@ if(-not $resourceGroupName -and -not $workspaceName)
 
   6. Define a dataset
 
-  7. Attach an Azure blob container as a Datastore for large datasets
-  8. Upload files to a Datastore
-  9. Scaffold and register Environments
-  10. Start a computetarget and run an experiment
+  7. Make the dataset available to your training environment
+
+  8. Attach an Azure blob container as a Datastore for large datasets
+  9. Upload files to a Datastore
+  10. Scaffold and register Environments
+  11. Start a computetarget and run an experiment
 
   For these final steps you want an example or a tutorial, not a script.
 
@@ -96,21 +117,25 @@ if($?){
 "
 2. Choose or Create a ResourceGroup $resourceGroupName"
 if($resourceGroupName ){
+  "Looking for existing resource group called $resourceGroupName ..."
   az group show --output table --name $resourceGroupName
   if($?){
     "✅ OK"    
   }elseif($location){
-      "3.1 Create ResourceGroup $resourceGroupName in location $($location)? 
+      "... none found.
+
+      2.1 Create a new ResourceGroup $resourceGroupName in location $($location)? 
       (Creating a resource group is free and usually takes less than a minute)"
       Ask-YesElseThrow
       az group create --name $resourceGroupName --location $location
-      if($?){throw "failed at az group create --name $resourceGroupName --location $location"}
+      if(-not $?){throw "failed at az group create --name $resourceGroupName --location $location"}
   }else{
-    "
-    To create ResourceGroup $resourceGroupName you must also specify a `$location.
+    write-warning "
+    To create a new ResourceGroup, you must also specify a location, for instance
 
-    "
-    write-warning "Halted at step 3. Choose or Create a ResourceGroup.
+    $commandName $resourceGroupName $workspaceName -location uksouth
+
+    Halted at step 2. Choose or Create a ResourceGroup.
     "
     exit
   }
@@ -125,7 +150,7 @@ if($resourceGroupName ){
   (ResourceGroups are free).
 
   "
-  write-warning "Halted at step 3. Choose or Create a ResourceGroup.
+  write-warning "Halted at step 2. Choose or Create a ResourceGroup.
   "
   exit
 }
@@ -136,10 +161,13 @@ if($resourceGroupName ){
 3. Choose or Create a Workspace $workspaceName"
 
 if($workspaceName){
+  "Looking for existing workspace called $workspaceName ..."
   az ml workspace show --workspace-name $workspaceName --resource-group $resourceGroupName `
         --output table --query "{name:name,resourceGroup:resourceGroup,location:location}"
   if(-not $?){
-    "4.1 Create Workspace $workspaceName in Group $resourceGroupName?
+    "... none found.
+
+    3.1 Create a new Workspace $workspaceName in ResourceGroup $($resourceGroupName)?
     "
     write-warning "(An unused workspace may cost you about a `$1 per day for storage)
     "
@@ -160,7 +188,7 @@ if($workspaceName){
   (An unused workspaces may cost about a `$1 per day for storage)
 
   "
-  write-warning "Halted at step 4. Choose or Create a Workspace.
+  write-warning "Halted at step 3. Choose or Create a Workspace.
   "
   exit
 }
@@ -171,10 +199,13 @@ if($workspaceName){
 4. Choose or Create a computetarget $computeTargetName"
 
 if($computeTargetName ){
+  "Looking for existing computetarget called $computeTargetName ..."
   az ml computetarget show --output table `
             --name $computeTargetName -w $workspaceName -g $resourceGroupName
   if(-not $?){
-    "4.1 Create computetarget $computeTargetName of size $($computeTargetSize)? 
+    "... none found.
+
+    4.1 Create a new computetarget $computeTargetName of size $($computeTargetSize)? 
     (This will be created with min-nodes=0 and max-nodes=1 so it will be free when not in use)"
 
     Ask-YesElseThrow
@@ -217,9 +248,10 @@ if(test-path ".azureml/"){
   This directory is already attached:"
   get-childitem .azureml/*
 }else{
-  Ask-YesElseThrow "Attach this directory, with experiment-name $($experimentName)?"
-  az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName
-  if(-not $?){throw "failed at az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName"}
+  if(Ask-YesNo "Attach this directory, with experiment-name $($experimentName)?"){
+    az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName
+    if(-not $?){throw "failed at az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName"}
+  }
 }
 
 "✅ OK"
@@ -233,7 +265,7 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
   az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName 
   if(-not $?){throw "failed at az ml dataset register -f $datasetDefinitionFile --skip-validation"}
 }else{
-  $mldatasetlist=(az ml dataset list -g MLLearn -w ML1 ) -join [System.Environment]::NewLine
+  $mldatasetlist=(az ml dataset list -g $resourceGroupName -w $workspaceName ) -join [System.Environment]::NewLine
   $existingDatasets=(ConvertFrom-Json $mldatasetlist -NoEnumerate)
   if($existingDatasets.Length -gt 0){
     $mldatasetlist
@@ -243,8 +275,7 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
     a small dataset-Example.json file? (It will use the mnist 10k dataset)
     "
     if(Ask-YesNo){
-        if(-not $datasetDefinitionFile){$datasetDefinitionFile="dataset-Example.json"}
-        
+        $newDDF=if($datasetDefinitionFile){$datasetDefinitionFile}else{"dataset-Example.json"}        
         '{
             "datasetType": "File",
             "parameters": {
@@ -264,12 +295,12 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
               }
             },
             "schemaVersion": 1
-          }' > $datasetDefinitionFile
+          }' > $newDDF
 
-      Get-Content $datasetDefinitionFile
+      Get-Content $newDDF
 
-      az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName
-      if(-not $?){throw "failed at az ml dataset register -f $($datasetDefinitionFile) --skip-validation  -w $workspaceName -g $resourceGroupName"}
+      az ml dataset register -f "$newDDF" --skip-validation -w $workspaceName -g $resourceGroupName
+      if(-not $?){throw "failed at az ml dataset register -f $($newDDF) --skip-validation  -w $workspaceName -g $resourceGroupName"}
     }else{
       "Skipped Step 6. Define a dataset
       "
@@ -280,10 +311,11 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
 "✅ OK"
 # ----------------------------------------------------------------------------
 "
-7. Attach an Azure blob container as a Datastore for large datasets
-8. Upload files to a Datastore.
-9. Scaffold and register Environments
-10. Start a computetarget and run an experiment
+7. Make the dataset available to your training environment
+8. Attach an Azure blob container as a Datastore for large datasets
+9. Upload files to a Datastore.
+10. Scaffold and register Environments
+11. Start a computetarget and run an experiment
 "
 
 #az ml environment scaffold -n myenv -d myenvdirectory
