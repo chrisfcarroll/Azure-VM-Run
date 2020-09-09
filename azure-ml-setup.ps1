@@ -1,19 +1,79 @@
-#! /usr/bin/env pwsh
+#! /usr/bin/env pwsh -NoProfile
 # ----------------------------------------------------------------------------
+# The following line is deliberately left blank for powershell help parsing.
+
 <#
+.Synopsis
+Azure-ml-setup.ps1 will create the nested sequence of Azure resources needed to run a script on 
+an Azure ML computetarget. 
+
 .Description
-Azure-ml-setup.ps1
-• This script will go through steps in 
+- The script is based on the steps at 
   https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
-  needed to set up and use compute targets for training a model.
 
-  You can use the script to the very end, or just use parts of it.
+- You can use the script to the very end, or just use parts of it.
 
-• Show me the GUI?
-  The GUI way to do this is at https://ml.azure.com, which will take you through
-  similar initial steps as this script. 
-  You can also use the GUI as a dashboard, to see that what the script does
-  appears as expected in your azure account.
+- Required: You must already have an Azure Subscription with permissions to create 
+  resources. If you don't have one, you can get a new one for free in about 
+  10 minutes at https://azure.com
+
+----------------------------------------------------------------------------
+Resources Created
+
+[Azure Subscription]
+  └── ResourceGroup (at a location)
+      └── WorkSpace
+          ├── Dataset
+          ├── Computetarget (with a vmSize)
+          └── Experiment
+              └── runconfig (which references Dataset & Computetarget)
+
+As you can see, the Workspace is the primary Container. 
+- Keeping an empty WorkSpace alive costs about `$1 per day.
+- To create and destroy a workspace each time you start work typically 
+  takes a couple of minutes, and that is the first part of what this 
+  script automates.
+
+----------------------------------------------------------------------------
+The Steps
+
+1. Install az cli tool & ml extensions
+
+2. All resources are 'kept' together in a ResourceGroup. A ResourceGroup is 
+just a management convenience, tied to a location, but costing nothing.
+
+3. In the resourceGroup, you must create a Workspace. This will allocate
+some storage, and an unused workspace will cost you around `$1 per day. It
+may take a couple of minutes to create, and slightly less time to delete.
+
+4. Within the workspace, you create compute instances or compute clusters. 
+Clusters have the advantage they can auto-scale down to 0 nodes–i.e. no cost—
+when idle.
+
+5. Attach a local folder on your desktop to the workspace.
+
+6. Define a dataset
+
+7. Create a runconfig referencing your script, dataset, and computetarget
+
+8. Run the runconfig
+
+--------------------------------------------------------------------------
+Not covered by this script:
+9. Attach an Azure blob container as a Datastore for large datasets
+10. Upload files to a Datastore
+11. Scaffold and register Environments
+For these steps you may want an example or a tutorial, not a script.
+----------------------------------------------------------------------------
+
+Usage:
+
+$commandName
+    [[-resourceGroupName] <string>] [[-location] <string>]
+    [[-workspaceName] <string>] 
+    [[-computeTargetName] <string>] [[-computeTargetSize] <string>] 
+    [[-experimentName] <string>] 
+    [[-datasetDefinitionFile] <string>]
 #>
 Param(
   [string]$resourceGroupName,
@@ -23,7 +83,8 @@ Param(
     [string]$computeTargetSize='nc6',
   [string]$experimentName= (Split-Path (Get-Location) -Leaf),
   [ValidateScript({Test-Path $_ -PathType 'Leaf'})][string]$datasetDefinitionFile,
-  [string]$location
+  [string]$location,
+  [switch]$help
 )
 # ----------------------------------------------------------------------------
 function Ask-YesNo($msg){return ($Host.UI.PromptForChoice("Confirm",$msg, ("&Yes","&No"),1) -eq 0)}
@@ -31,67 +92,10 @@ function Ask-YesElseThrow($msg){
   if($Host.UI.PromptForChoice("Confirm",$msg, ("&Yes","&No"),1) -ne 0){throw "Halted because you said No"}
 }
 # ----------------------------------------------------------------------------
-# don't use https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
-"
-• This script will go through steps in 
-  https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
-  needed to set up and use compute targets for training a model.
-
-  You can use the script to the very end, or just use parts of it.
-
-• Show me the GUI?
-
-  The GUI way to do this is at https://ml.azure.com, which will take you through
-  similar initial steps as this script. 
-  You can also use the GUI as a dashboard, to see that what the script does
-  appears as expected in your azure account.
-
-"
-# ----------------------------------------------------------------------------
-$commandName=(Split-Path $PSCommandPath -Leaf)
-if(-not $resourceGroupName -and -not $workspaceName)
+if((-not $resourceGroupName -and -not $workspaceName) -or $help)
 {
-
-  "
-  ----------------------------------------------------------------------------
-  Usage:
-
-  $commandName [-resourceGroupName] <name> [-workspaceName] <name>
-             [[-location] <name>]
-
-  ----------------------------------------------------------------------------
-
-  What is needed to create, use, & tear down cloud-based ML resources?
-
-  1. Install az cli tool & ml extensions
-
-  2. All resources are 'kept' together in a ResourceGroup. A ResourceGroup is 
-  just a management convenience, tied to a location, but costing nothing.
- 
-  3. In the resourceGroup, you must create a Workspace. This will allocate
-  some storage, and an unused workspace will cost you around `$1 per day. It
-  may take a couple of minutes to create, and slightly less time to delete.
-
-  4. Within the workspace, you create compute instances or compute clusters. 
-  Clusters have the advantage they can auto-scale down to 0 nodes–i.e. no cost—
-  when idle.
-
-  5. Attach a local folder on your desktop to the workspace.
-
-  6. Define a dataset
-
-  7. Create a runconfig referencing your script, dataset, and computetarget
-
-  8. Run the runconfig
-
-  --------------------------------------------------------------------------
-  Not covered by this script:
-  9. Attach an Azure blob container as a Datastore for large datasets
-  10. Upload files to a Datastore
-  11. Scaffold and register Environments
-  For these steps you may want an example or a tutorial, not a script.
-  ----------------------------------------------------------------------------
-  "
+  Get-Help $PSCommandPath
+  exit
 }
 
 # ----------------------------------------------------------------------------
@@ -102,14 +106,16 @@ if($azcli){
   "✅ Found at " + $azcli.Path
 }else{
   Start-Process "https://www.bing.com/search?q=install+az+cli+site:microsoft.com"
-  throw "az cli not found in path. Find installation instructions via https://www.bing.com/search?q=install+az+cli+site:microsoft.com"
+  throw "az cli not found in path. 
+        Find installation instructions via https://www.bing.com/search?q=install+az+cli+site:microsoft.com
+        Having installed the CLI, don't forget to az login to confirm you can connect to your subscription."
 }
 az extension add -n azure-cli-ml
 if($?){
   "✅ OK"
 }else{
   Start-Process "https://www.bing.com/search?q=az+cli+install+extension+ml+failed"
-  throw "adding extension azure-cli-ml. Not sure where to go from here."
+  throw "Failed when adding extension azure-cli-ml. Not sure where to go from here."
 }
 
 # ----------------------------------------------------------------------------
