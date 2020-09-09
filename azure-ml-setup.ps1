@@ -76,21 +76,20 @@ if(-not $resourceGroupName -and -not $workspaceName)
   Clusters have the advantage they can auto-scale down to 0 nodes–i.e. no cost—
   when idle.
 
-  Optionally: 
-
   5. Attach a local folder on your desktop to the workspace.
 
   6. Define a dataset
 
-  7. Make the dataset available to your training environment
+  7. Create a runconfig referencing your script, dataset, and computetarget
 
-  8. Attach an Azure blob container as a Datastore for large datasets
-  9. Upload files to a Datastore
-  10. Scaffold and register Environments
-  11. Start a computetarget and run an experiment
+  8. Run the runconfig
 
-  For these final steps you want an example or a tutorial, not a script.
-
+  --------------------------------------------------------------------------
+  Not covered by this script:
+  9. Attach an Azure blob container as a Datastore for large datasets
+  10. Upload files to a Datastore
+  11. Scaffold and register Environments
+  For these steps you may want an example or a tutorial, not a script.
   ----------------------------------------------------------------------------
   "
 }
@@ -311,11 +310,12 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
 "✅ OK"
 # ----------------------------------------------------------------------------
 "
-7. Make the dataset available to your training environment
-8. Attach an Azure blob container as a Datastore for large datasets
-9. Upload files to a Datastore.
-10. Scaffold and register Environments
-11. Start a computetarget and run an experiment
+7. Create a runconfig referencing your script, dataset, and computetarget
+8. Run the runconfig
+Not covered: 
+9. Attach an Azure blob container as a Datastore for large datasets
+10. Upload files to a Datastore.
+11. Scaffold and register Environments
 "
 
 #az ml environment scaffold -n myenv -d myenvdirectory
