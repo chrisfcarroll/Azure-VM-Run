@@ -23,8 +23,8 @@ Resources Created
 [Azure Subscription]
   └── ResourceGroup (at a location)
       └── WorkSpace
-          ├── Dataset
-          ├── Computetarget (with a vmSize)
+          ├── Dataset(s) (optional)
+          ├── Computetarget (with a vmSize which may include GPU)
           └── Experiment
               └── runconfig (which references Dataset, Computetarget and a script)
 
@@ -50,33 +50,57 @@ may take a couple of minutes to create, and slightly less time to delete.
 Clusters have the advantage they can auto-scale down to 0 nodes–i.e. no cost—
 when idle.
 
-5. Attach a local folder on your desktop to the workspace.
+5. Define a Dataset
 
-6. Define a Dataset
+6. Choose an Environment by name
 
-7. Choose an Environment by name
+7. Choose a python script to run
 
-8. Create a runconfig referencing your environment, script, dataset, computetarget
+8. Attach a local folder on your desktop to the workspace, and create a runconfig 
+   referencing your environment, script, dataset, computetarget
 
-9. Run the runconfig
+9. Choose or create a runconfig
+
+10. Submit the runconfig
 
 --------------------------------------------------------------------------
 Not covered by this script:
-10. Attach an Azure blob container as a Datastore for large datasets
-11. Upload files to a Datastore
-For these steps you may want an example or a tutorial, not a script.
+- Attach an Azure blob container as a Datastore for large datasets and upload files
+- Scaffolding a new environment
 ----------------------------------------------------------------------------
 
 Usage:
 
 azure-ml-setup.ps1 
-    [[-resourceGroupName] <String>] [[-location] <String>]
+    [[-resourceGroupName] <String>] [[-location] <String>] 
     [[-workspaceName] <String>] 
     [[-computeTargetName] <String>] [[-computeTargetSize] <String>] 
     [[-experimentName] <String>] 
-    [[-datasetDefinitionFile] <String>] 
-    [[-environmentMatch] <String>] [[-environmentName] <String>] 
-    [-help] [<CommonParameters>]
+    [-datasetDefinitionFile <String> | -datasetName <String> | -datasetId <String>] 
+    [-environmentMatching <String> | -environmentName <String>] 
+    [-attachFolder [ Yes | No | Ask ] ] 
+    [-script <String>] 
+    [-submit] 
+    [-help] 
+    [<CommonParameters>]
+
+.Example
+azure-ml-setup.ps1 ml1 ml1 ml1 -location uksouth
+Creates:
+  -a resourceGroup named ml1 in Azure location uksouth,
+  -a workspace named ml1 in that resourceGroup,
+  -a computetarget ml1 of default size (nc6) in the workspace
+Prompts you:
+   -to attach your current local folder to the workspoace
+   -to create a definition file and register an example dataset (mnist)
+   -to create an example script to run
+  
+.Example
+azure-ml-setup.ps1 ml1 ml1 ml1 
+Creates a resourceGroup named ml1 in Azure location uksouth,
+then creates a workspace named ml1 in that resourceGroup,
+then creates a computetarget ml1 of default size (nc6) in the workspace
+  
 
 #>
 Param(
@@ -93,18 +117,29 @@ Param(
     [string]$computeTargetSize='nc6',
   ##Used for steps 5, 8, 9.
   [string]$experimentName= (Split-Path (Get-Location) -Leaf),
-  ##Optional
+  ##Name of a file to create a new dataset
   [ValidateScript({Test-Path $_ -PathType 'Leaf'})][string]$datasetDefinitionFile,
+  ##Name of an existing Dataset to use
+  [string]$datasetName,
+  ##Id of an existing Dataset to use
+  [string]$datasetId,
   ##Usable for steps 7,8,9 as a convenience. Using this will pick the alphabetically last matching environment,
   ##which will typically be the one with the highest version number
   [ValidateSet('TensorFlow','PyTorch','Scikit','PySpark','Minimal','AzureML-Tutorial','TensorFlow-2','TensorFlow-1','PyTorch-1.6')]
-    [string]$environmentMatch,
+    [string]$environmentMatching,
   ##Usable for steps 7,8,9 when you know the exact environmentName you require.
   ##See https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments for Azure-curated environments
   [string]$environmentName,
+  ##Confirm attach the current folder to the workspace, which will help in generating a runconfig
+  [ValidateSet('Yes','No','Ask')][string]$attachFolder='Ask',
+  ##The script file (and by implication, the script directory) to submit
+  [string]$script='scripts/train.py',
+  ##Whether to submit the script
+  [switch]$submit,
   ##An Azure region name. Only required when creating a new ResourceGroup at step 2. 
   ##Thereafter the ResourceGroup is all the location you need.
   [string]$location,
+  ##show this help text
   [switch]$help
 )
 # ----------------------------------------------------------------------------
@@ -112,6 +147,15 @@ function Ask-YesNo($msg){return ($Host.UI.PromptForChoice("Confirm",$msg, ("&Yes
 function Ask-YesElseThrow($msg){
   if($Host.UI.PromptForChoice("Confirm",$msg, ("&Yes","&No"),1) -ne 0){throw "Halted because you said No"}
 }
+
+function Get-DatasetByName($name, $rg, $ws){
+  $datasets=(ConvertFrom-Json (
+      (az ml dataset list -g $rg -w $ws --query "[?name==`'$name`'].{id:id,name:name}") -join [Environment]::NewLine
+    ) -AsHashtable -NoEnumerate)
+
+  return $( if($datasets.Length){ $datasets[0] }else{ $null } )
+}
+
 # ----------------------------------------------------------------------------
 if((-not $resourceGroupName -and -not $workspaceName) -or $help)
 {
@@ -259,91 +303,93 @@ if($computeTargetName ){
   "
   exit
 }
-"✅ OK" 
-
-# ----------------------------------------------------------------------------
-
-"
-5. Attach the current folder to the workspace $workspaceName in resource group $resourceGroupName
-
-Your current path is $(Get-Location)
-Your experimentName is $experimentName"
-
-if(test-path ".azureml/"){
-  "
-  This directory is already attached:"
-  get-childitem .azureml/*
-}else{
-  if(Ask-YesNo "Attach this directory, with experiment-name $($experimentName)?"){
-    az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName
-    if(-not $?){throw "failed at az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName"}
-  }
-}
-
 "✅ OK"
 # ----------------------------------------------------------------------------
 
 "
-6. Define a dataset $datasetDefinitionFile"
+5. Choose a Dataset or Define one from a file $datasetDefinitionFile"
 
-if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
+if($datasetName){
+  $dataset= Get-DatasetByName $datasetName, $resourceGroupName, $workspaceName
+  if(-not $dataset){
+    "You specified datasetName $datasetName but no dataset was found in workspace $workspace name.
+    Existing datasets:"
+    az ml dataset list -g $resourceGroupName -w $workspaceName
+  }else{
+    $datasetId=$dataset.id
+  }
+  $chosenDatasetFile=$null
+}
+
+if(-not $datasetId -and ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
+
   "Registering dataset defined by $datasetDefinitionFile"
   az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName 
   if(-not $?){throw "failed at az ml dataset register -f $datasetDefinitionFile --skip-validation"}
   $chosenDatasetFile=$datasetDefinitionFile
-}else{
-  $mldatasetlist=(az ml dataset list -g $resourceGroupName -w $workspaceName ) -join [System.Environment]::NewLine
-  $existingDatasets=(ConvertFrom-Json $mldatasetlist -NoEnumerate)
-  if($existingDatasets.Length -gt 0){
-    $mldatasetlist
-    $chosenDatasetFile=$null #none chosen but that's fine
+}
+
+if(-not $datasetId -and -not $chosenDatasetFile){
+  "
+  You have not provided a dataset json file. Would you like to create and register 
+  a small dataset-Example.json file? (It will use the mnist 10k dataset)
+  "
+  if(Ask-YesNo){
+      $chosenDatasetFile=if($datasetDefinitionFile){$datasetDefinitionFile}else{"dataset-Example.json"}        
+      '{
+          "datasetType": "File",
+          "parameters": {
+            "path": [
+              "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz",
+              "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz",
+              "http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz",
+              "http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz"
+            ]
+          },
+          "registration": {
+            "createNewVersion": true,
+            "description": "mnist dataset",
+            "name": "mnist-dataset",
+            "tags": {
+              "sample-tag": "mnist"
+            }
+          },
+          "schemaVersion": 1
+        }' > $chosenDatasetFile
+
+    Get-Content $chosenDatasetFile
+
+    az ml dataset register -f "$chosenDatasetFile" --skip-validation -w $workspaceName -g $resourceGroupName
+    if(-not $?){throw "failed at az ml dataset register -f $($chosenDatasetFile) --skip-validation  -w $workspaceName -g $resourceGroupName"}
   }else{
+    "Skipped Step 5. Define a dataset
     "
-    You have not provided a dataset json file. Would you like to create and register 
-    a small dataset-Example.json file? (It will use the mnist 10k dataset)
-    "
-    if(Ask-YesNo){
-        $chosenDatasetFile=if($datasetDefinitionFile){$datasetDefinitionFile}else{"dataset-Example.json"}        
-        '{
-            "datasetType": "File",
-            "parameters": {
-              "path": [
-                "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz",
-                "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz",
-                "http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz",
-                "http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz"
-              ]
-            },
-            "registration": {
-              "createNewVersion": true,
-              "description": "mnist dataset",
-              "name": "mnist-dataset",
-              "tags": {
-                "sample-tag": "mnist"
-              }
-            },
-            "schemaVersion": 1
-          }' > $chosenDatasetFile
-
-      Get-Content $chosenDatasetFile
-
-      az ml dataset register -f "$chosenDatasetFile" --skip-validation -w $workspaceName -g $resourceGroupName
-      if(-not $?){throw "failed at az ml dataset register -f $($chosenDatasetFile) --skip-validation  -w $workspaceName -g $resourceGroupName"}
-    }else{
-      "Skipped Step 6. Define a dataset
-      "
-    }
   }
+}
+
+if($chosenDatasetFile){
+  $datasetSpec= (ConvertFrom-Json ((Get-Content $chosenDatasetFile) -join [Environment]::NewLine) -NoEnumerate -AsHashtable)
+  $datasetName=$datasetSpec.registration.name
+  $dataset= Get-DatasetByName $datasetName $resourceGroupName $workspaceName
+  if($dataset){
+    $datasetId=$dataset.id
+  }
+}
+
+if($datasetId){
+   "Using datasetId $datasetId"
+}else{
+  "Continuing with no dataset"
 }
 
 "✅ OK"
 # ----------------------------------------------------------------------------
 "
-7. Choose an Environment by name
+6. Choose an Environment by name
 "
 if($environmentName){
     $chosenEnvironmentName=$environmentName
-    az ml environment show  --name $environmentName -w $workspaceName --output table
+    az ml environment show  --name $environmentName -w $workspaceName -g $resourceGroupName --output table
     if(-not $?){
       write-warning "
       You asked for environment $environmentName , but no such was found.
@@ -353,24 +399,24 @@ if($environmentName){
 
       This script doesn't cover creating your own custom environment.
 
-      Halted at 7. Choose an Environment, because your choice wasn't found.
+      Halted at 6. Choose an Environment, because your choice wasn't found.
       "
       exit
     }
-  }elseif($environmentMatch){
-    "7.1 Looking for an existing environment matching $environmentMatch ...
+  }elseif($environmentMatching){
+    "6.1 Looking for an existing environment matching $environmentMatching ...
     "
-    $matchesj=(az ml environment list -w $workspaceName `
-                --query "[?contains(name,`'$environmentMatch`')].name") `
+    $matchesj=(az ml environment list -w $workspaceName  -g $resourceGroupName `
+                --query "[?contains(name,`'$environmentMatching`')].name") `
                 -match '".*"'
     if($matchesj.Length -eq 0){
       write-warning "
-      You asked for a curated environment matching $environmentMatch , but no such was found.
+      You asked for a curated environment matching $environmentMatching , but no such was found.
       Here are all known environments available to your workspace:
       "
-      az ml environments list -w $workspaceName --output table
+      az ml environment list -w $workspaceName -g $resourceGroupName --output table
       write-warning "
-      Halted at 7. Choose an Environment, because your choice $environmentMatch wasn't found.
+      Halted at 6. Choose an Environment, because your choice $environmentMatching wasn't found.
       "
       exit
     }else{
@@ -378,8 +424,7 @@ if($environmentName){
       $chosenEnvironmentName=($matches | Sort-Object -Descending)[0]
       "Found:"
       $matches
-      "
-      7.1 Choosing $chosenEnvironmentName as the alphabetically last match."
+      "6.2 Choosing $chosenEnvironmentName as the alphabetically last match."
     }
   }else{
     "Choose an environment either with 
@@ -388,39 +433,154 @@ if($environmentName){
 
     -environmentFor <string-to-search-in-azure-curated-environments-eg-Tensorflow>
     "
-
-    write-warning "
-    Halted at 7. Choose an Environment, because you didn't."
+    write-warning "Halted at 6. Choose an Environment because you didn't."
+    exit
   }
 
+# ----------------------------------------------------------------------------
+"
+7. Choose a script file to run"
+
+if($script -and (test-path $script)){
+  "Found $script"
+  $askScript=$null
+}elseif(-not $script){
+  $askScript="
+  You did not specify a script to run.
+  Would you like to use an example script which will train on the mnist dataset?"
+}else{
+  $askScript="
+  There is no $script
+  Would you like to create an example script which will train on the mnist dataset?"
+}
+
+if($askScript){
+  $askScript
+  if(Ask-YesNo){
+    $exampleScript= $(switch -regex ($environmentName){
+      "TensorFlow" { "example-tensorflow-train-mnist.py" ; break}
+      "PyTorch" { "example-pytorch-train-mnist.py" ; break}
+      "Scikit" { "example-scikit-train-mnist.py" ; break}
+      default { "example-no-framework.py" }
+    })
+    $script= "scripts/$exampleScript"
+    mkdir scripts
+    cp miscellany/$exampleScript $script
+    Get-Content $script
+  }else{
+    write-warning "Halted at 7. Choose a script file because you didn't have one and didn't want an example one"
+    exit
+  }
+}
+$scriptFile=(Split-Path $script -Leaf)
+$scriptDir=(Split-Path $script -Parent)
 
 "✅ OK"
 # ----------------------------------------------------------------------------
-"
-8. Create a runconfig referencing your environment, script, dataset, computetarget
 
-Got:
+"
+8. Attach the current folder to the workspace $workspaceName in resource group $resourceGroupName ?
+
+Your current path is $(Get-Location)
+Your experimentName is $(if($experimentName){$experimentName}else{'<no name given>'})
+"
+$previousComputeTargetRunConfig=(Resolve-path ".azureml/$($computeTargetName).runconfig" -ErrorAction SilentlyContinue)
+$previousAnyRunConfigs=(test-path '.azureml/*.runconfig')
+
+if(test-path ".azureml/"){
+  "
+  This directory is already attached:"
+  get-childitem .azureml/*
+}elseif($attachFolder -eq 'No'){
+  "Not attaching because you said so."
+}elseif(-not $experimentName){
+  "Not attaching because you must specify -experimentName to attach a folder"
+}else{
+  if( $attachFolder -eq 'Yes' `
+      -or ( $attachFolder -eq 'Ask' `
+          -and (Ask-YesNo "Attach this directory, with experiment-name $($experimentName)?")) `
+    ){
+    az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName
+    if(-not $?){
+      throw "failed at az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName"
+    }
+  }
+}
+
+# ----------------------------------------------------------------------------
+"
+9. Create a runconfig referencing your environment, script, dataset, computetarget
+"
+
+"Got:
    ResourceGroup  : $resourceGroupName 
    Workspace      : $workspaceName 
    ComputeTarget  : $computeTargetName 
    Environment    : $chosenEnvironmentName
+   Script         : $($(if(test-path $script){"$script"}else{'No'}))
+   DatasetId?     : $datasetId
    New Dataset?   : $(if($chosenDatasetFile){$chosenDatasetFile}else{'(no new dataset defined)'})
    Experiment Name: $experimentName
    Local directory attached? : $(if(test-path ".azureml/"){'Yes'}else{'No'})
    "
 
+if($previousComputeTargetRunConfig){
+  "
+  runconfig file $previousComputeTargetRunConfig already exists.
+  "
+  write-warning "If you didn't want to use it, delete it and re-run this script
+  "
+  $runconfigFile=$previousComputeTargetRunConfig
 
+}elseif(-not $chosenEnvironmentName -or -not $experimentName -or -not $script){
+
+  "
+  You must still specify:"
+
+  if(-not $chosenEnvironmentName){" -environmentMatch or -environmentName. e.g. -environmentMatch TensorFlow"}
+  if(-not $experimentName){" -experimentName. Defaults to current folder name."}
+  if(-not $script){" -script e.g. scripts/train.py"}
+  write-warning "Halting because you have not specified everything needed to create a runconfig"
+  exit
+
+}else{
+
+  if($previousAnyRunConfigs){
+    "runconfig files already existed in .azureml but none called $($computeTargetName).runconfig"}
+
+  if(Ask-YesNo "Create a $($computeTargetName).runconfig file?"){
+
+    $content= Get-Content miscellany/example.runconfig
+    $content= $content -replace '$computeTargetName',"$computeTargetName"
+    $content= $content -replace '$scriptFile',"$scriptFile"
+    $content= $content -replace '$chosenEnvironmentName',"$chosenEnvironmentName"
+    $content= $content -replace '$datasetId',"$datasetId"
+
+    Set-Content -Path ".azureml/$($computeTargetName).runconfig" -Value $content
+
+  }else{
+    write-warning `
+    "Stopped at 9. Create a runconfig because no $($computeTargetName).runconfig exists and you said to not create one."
+  }
+
+  $runconfigFile= (Resolve-path ".azureml/$($computeTargetName).runconfig")
+}
 "✅ OK"
+
 # ----------------------------------------------------------------------------
 "
-9. Run the runconfig
-
-Not covered: 
-10. Attach an Azure blob container as a Datastore for large datasets
-11. Upload files to a Datastore
+10. Submit the runconfig $runconfigFile ...
 "
 
-#az ml environment scaffold -n myenv -d myenvdirectory
+if($submit){
+  az ml run submit-script -c $computeTargetName -e "$experimentName" --source-directory "$scriptDir" -t runoutput.json
+}else{
+  "Not running because you didn't specify -submit
+
+  To submit the run, use this command line:
+
+  az ml run submit-script -c $computeTargetName -e $experimentName --source-directory `"$scriptDir`" -t runoutput.json"
+}
 
 # ----------------------------------------------------------------------------
 

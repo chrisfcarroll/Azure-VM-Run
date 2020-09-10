@@ -1,23 +1,21 @@
 # The script to run.
-script: train.py
+script: $scriptFile
 # The arguments to the script file.
-arguments:
-- --data-folder
-- DatasetConsumptionConfig:mnist
+arguments: []
 # The name of the compute target to use for this run.
-target: cpu-cluster
+target: $computeTargetName
 # Framework to execute inside. Allowed values are "Python" ,  "PySpark", "CNTK",  "TensorFlow", and "PyTorch".
-framework: python
+framework: Python
 # Communicator for the given framework. Allowed values are "None" ,  "ParameterServer", "OpenMpi", and "IntelMpi".
 communicator: None
 # Maximum allowed duration for the run.
-maxRunDurationSeconds: 2592000
+maxRunDurationSeconds:
 # Number of nodes to use for running job.
-nodeCount: 4
+nodeCount: 1
 # Environment details.
 environment:
 # Environment name
-  name: conda-env
+  name: $chosenEnvironmentName
 # Environment version
   version:
 # Environment variables set for the run.
@@ -130,20 +128,19 @@ paralleltask:
 # data reference configuration details
 dataReferences: {}
 # The configuration that describes how to make data available for the run.
+# data reference configuration details
+dataReferences: {}
+# The configuration details for data.
 data:
-  mnist:
+  example:
 # Data Location
     dataLocation:
 # the Dataset used for this run.
       dataset:
 # Id of the dataset.
-        id: 22911e1b-5dc7-42ff-8a26-4fe9113ccc39
-# Name of the dataset.
-        name:
-# Version of the dataset.
-        version:
+        id: $datasetId
 # the DataPath used for this run.
-      dataPath:
+      datapath:
 # Whether to create new folder.
     createOutputDirectories: false
 # The mode to handle
@@ -167,6 +164,6 @@ amlcompute:
 # A bool that indicates if the cluster has to be retained after job completion.
   retainCluster: false
 # Name of the cluster to be created. If not specified, runId will be used as cluster name.
-  name:
+  name: $computeTargetName
 # Maximum number of nodes in the AmlCompute cluster to be created. Minimum number of nodes will always be set to 0.
   clusterMaxNodeCount:
