@@ -7,7 +7,6 @@ az vm list-skus --location uksouth --query '[?capabilities.VMDeploymentType=="Ia
 az vm list-skus --location uksouth 
   --query 
     "[?resourceType=='virtualMachines'].{name:name,size:size,gpus:capabilities[?name=='GPUs']}|[?gpus].{name:name,size:size,gpus:gpus[0].to_number(value)}"
-
 ```
 
 ```

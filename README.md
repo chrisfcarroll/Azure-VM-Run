@@ -1,15 +1,25 @@
-# AzureMLSetup
+# Create Azure Machine Learning Resources for Training
 
 ```
-azure-ml-setup.ps1 
-      [[-resourceGroupName] <string> [[-location] <string>]]
-      [[-workspaceName] <string>] 
-      [[-computeTargetName] <string> [[-computeTargetSize] <string>]]
-      [[-experimentName] <string>] 
-      [[-datasetDefinitionFile] <string>]
+Ensure-AzMLResources-And-Submit-ForTraining.ps1 
+    [[-resourceGroupName] <String> [-location <StringLocationName>]] 
+    [[-workspaceName] <String>] 
+    [[-computeTargetName] <String> [-computeTargetSize <StringvmSize>]] 
+    [[-experimentName] <String>] 
+    [-datasetName <String> | -datasetDefinitionFile <path> | -datasetId <StringGuid>]
+    [-environmentFor <String> | -environmentName <String>] 
+    [-attachFolder [ Yes | No | Ask ] ] 
+    [-script <path>] 
+    [-submit] 
+    [-noConfirm]   
+    [-help] 
+    [<CommonParameters>]
 ```
 
-This repository is primarily about the script file `azure-ml-setup.ps1`  which will create the nested sequence of Azure resources needed to run a script on an Azure ML computetarget. 
+This repository is primarily about the script file `Ensure-AzMLResources-And-Submit-ForTraining.ps1`  which will help you to perform one or all of:
+  -create the nested sequence of Azure resources needed to run a script on an Azure ML computetarget 
+  -create a runconfig file for the script and the resources
+  -submit the run
 
 - The script is based on the steps at https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
 - You can use the script to the very end, or just use parts of it.
@@ -22,25 +32,58 @@ resources. If you don't have one, you can get a new one for free in about
 What is needed to create, use, & tear down cloud-based ML resources?
 
 [Azure Subscription]
-    └── ResourceGroup (at a location accessible to your subscription)
-      ├── WorkSpace
-      ├── Dataset
-      ├── Computetarget (with a vmSize)
-      ├── Environment (the simplest is to choose from the list of curated environments)
-      └── Experiment
-          └── runconfig (which references all the above and also points to your code to run)
+  └── ResourceGroup (at a location)
+      └── WorkSpace
+          ├── Computetarget (with a vmSize which may include GPU)
+          ├── Dataset(s) (optional)
+          └── Experiment
+              └── runconfig 
+                  (which references the computetarget, the optional dataset, 
+                   the experiment and a script)
 
-As you can see, the Workspace is the primary Container. 
-- Keeping an empty WorkSpace alive costs about $1 per day.
-- To create and destroy a workspace each time you start work typically takes a couple of minutes, and that is the first part of what this script automates.
+The *workspace* is the primary Machine Learning container. It offers shared 
+access to resources, can be accessed from https://ml.azure.com and can 
+connect to your local desktop.
+- Keeping an empty workspace alive costs about $1 per day.
+- To create and destroy a workspace each time you start work typically 
+  takes a couple of minutes, and that is the first part of what this 
+  script automates.
+
+#### Examples
+
+```
+Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -location uksouth
+```
+Creates:
+  -a resourceGroup named ml1 in Azure location uksouth,
+  -a workspace named ml1 in that resourceGroup,
+  -a computetarget ml1 of default size (nc6) in the workspace
+and stops
+  
+```
+Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 ml1
+  -datasetName mnist-dataset 
+  -environmentFor TensorFlow 
+  -script ./scripts/train.py
+  -attachFolder Yes
+```
+Will do these steps:
+ - Ensure or creates:
+     - a resourceGroup, a workspace, a computetarget and an experiment, all called ml1
+ - Ensure a dataset named mnist-dataset already exists in your workspace
+ - Pick the alphabetically last environment with name matching TensorFlow
+ - Ensure the script ./scripts/train.py
+ - Attach your current folder to the workspace
+ - Generate a runconfig file called ml1.runconfig
+ - Show you the command line to submit the run
+If you add the -submit flag it will also start the run
 
 ####Show me the GUI?
 
-The GUI way to do this is at https://ml.azure.com, which will take you through
+The GUI way to do this is at https://ml.azure.com, and it can take you through
 similar initial steps as this script. 
 You can also use the GUI as a dashboard, to see that what the script does
 appears as expected in your azure account.
-
 
 ## Azure GPU options
 
