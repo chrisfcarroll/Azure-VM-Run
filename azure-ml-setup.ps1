@@ -23,8 +23,8 @@ Resources Created
 [Azure Subscription]
   └── ResourceGroup (at a location)
       └── WorkSpace
-          ├── Dataset(s) (optional)
           ├── Computetarget (with a vmSize which may include GPU)
+          ├── Dataset(s) (optional)
           └── Experiment
               └── runconfig (which references Dataset, Computetarget and a script)
 
@@ -72,14 +72,14 @@ Not covered by this script:
 Usage:
 
 azure-ml-setup.ps1 
-    [[-resourceGroupName] <String>] [[-location] <String>] 
+    [[-resourceGroupName] <String>] [-location <StringLocationName>]
     [[-workspaceName] <String>] 
-    [[-computeTargetName] <String>] [[-computeTargetSize] <String>] 
+    [[-computeTargetName] <String>] [[-computeTargetSize] <StringvmSize>] 
     [[-experimentName] <String>] 
-    [-datasetDefinitionFile <String> | -datasetName <String> | -datasetId <String>] 
-    [-environmentMatching <String> | -environmentName <String>] 
-    [-attachFolder [ Yes | No | Ask ] ] 
-    [-script <String>] 
+    [-datasetName <String> | -datasetDefinitionFile <path> | -datasetId <StringGuid>] 
+    [[-environmentMatching] <String> | [-environmentName] <String>] 
+    [[-attachFolder] [ Yes | No | Ask ] ] 
+    [[-script] <path>] 
     [-submit] 
     [-help] 
     [<CommonParameters>]
@@ -110,35 +110,38 @@ Param(
   ##Required for step 3 and further. A new or existing workspace, which will hold references to 
   ##your data and computetargets
   [string]$workspaceName,
-  ##Used for steps 4, 8, 9. A new or existing Azure computetarget to run on
+  ##Used for step 4, required to create a runconfig. A new or existing Azure computetarget to run on
   [string]$computeTargetName,
-  ##Only required when creating a new computetarget at step 4. The pre-selected options are the ones with a GPU
-  [ValidateSet('nc6','nc12','nc24','nc6v3','nc12v3','nc24v3','nc6promo','nc12promo','nc24promo')]
-    [string]$computeTargetSize='nc6',
-  ##Used for steps 5, 8, 9.
+  ##Required to create a runconfig, but defaults to current directory name
   [string]$experimentName= (Split-Path (Get-Location) -Leaf),
-  ##Name of a file to create a new dataset
-  [ValidateScript({Test-Path $_ -PathType 'Leaf'})][string]$datasetDefinitionFile,
   ##Name of an existing Dataset to use
   [string]$datasetName,
+  ##Name of a file to create a new dataset
+  [ValidateScript({Test-Path $_ -PathType 'Leaf'})][string]$datasetDefinitionFile,
   ##Id of an existing Dataset to use
   [string]$datasetId,
-  ##Usable for steps 7,8,9 as a convenience. Using this will pick the alphabetically last matching environment,
+  ##Usable for step 7. Using this will pick the alphabetically last matching environment,
   ##which will typically be the one with the highest version number
   [ValidateSet('TensorFlow','PyTorch','Scikit','PySpark','Minimal','AzureML-Tutorial','TensorFlow-2','TensorFlow-1','PyTorch-1.6')]
     [string]$environmentMatching,
-  ##Usable for steps 7,8,9 when you know the exact environmentName you require.
+  ##Usable for step 7 when you know the exact environmentName you require.
   ##See https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments for Azure-curated environments
   [string]$environmentName,
   ##Confirm attach the current folder to the workspace, which will help in generating a runconfig
   [ValidateSet('Yes','No','Ask')][string]$attachFolder='Ask',
   ##The script file (and by implication, the script directory) to submit
   [string]$script='scripts/train.py',
-  ##Whether to submit the script
+  ##Whether to submit the script. Otherwise, the generated command line will be shown.
+  ##A submittable script requires resourceGroup, workspace, computetarget, experimentName, 
+  ##an environment and a script
   [switch]$submit,
+
   ##An Azure region name. Only required when creating a new ResourceGroup at step 2. 
   ##Thereafter the ResourceGroup is all the location you need.
   [string]$location,
+  ##Only required when creating a new computetarget at step 4. The pre-selected options are the ones with a GPU
+  [ValidateSet('nc6','nc12','nc24','nc6v3','nc12v3','nc24v3','nc6promo','nc12promo','nc24promo')]
+    [string]$computeTargetSize='nc6',
   ##show this help text
   [switch]$help
 )
@@ -149,6 +152,7 @@ function Ask-YesElseThrow($msg){
 }
 
 function Get-DatasetByName($name, $rg, $ws){
+  if(-not $rg -or -not $ws){throw "You must specify all of `$name `$rg `$ws without commas. [`$name=$name]"}
   $datasets=(ConvertFrom-Json (
       (az ml dataset list -g $rg -w $ws --query "[?name==`'$name`'].{id:id,name:name}") -join [Environment]::NewLine
     ) -AsHashtable -NoEnumerate)
@@ -185,7 +189,8 @@ if($?){
 
 # ----------------------------------------------------------------------------
 "
-2. Choose or Create a ResourceGroup $resourceGroupName"
+2. Choose or Create a ResourceGroup $resourceGroupName
+"
 if($resourceGroupName ){
   "Looking for existing resource group called $resourceGroupName ..."
   az group show --output table --name $resourceGroupName
@@ -228,7 +233,8 @@ if($resourceGroupName ){
 # ----------------------------------------------------------------------------
 
 "
-3. Choose or Create a Workspace $workspaceName"
+3. Choose or Create a Workspace $workspaceName
+"
 
 if($workspaceName){
   "Looking for existing workspace called $workspaceName ..."
@@ -266,7 +272,8 @@ if($workspaceName){
 
 # ----------------------------------------------------------------------------
 "
-4. Choose or Create a computetarget $computeTargetName"
+4. Choose or Create a computetarget $computeTargetName
+"
 
 if($computeTargetName ){
   "Looking for existing computetarget called $computeTargetName ... (please wait a while) ..."
@@ -307,10 +314,11 @@ if($computeTargetName ){
 # ----------------------------------------------------------------------------
 
 "
-5. Choose a Dataset or Define one from a file $datasetDefinitionFile"
+5. Choose a Dataset $datasetName $datasetId or Define one from a file $datasetDefinitionFile
+"
 
 if($datasetName){
-  $dataset= Get-DatasetByName $datasetName, $resourceGroupName, $workspaceName
+  $dataset= Get-DatasetByName $datasetName $resourceGroupName $workspaceName
   if(-not $dataset){
     "You specified datasetName $datasetName but no dataset was found in workspace $workspace name.
     Existing datasets:"
@@ -332,7 +340,7 @@ if(-not $datasetId -and ($datasetDefinitionFile) -and (test-path $datasetDefinit
 if(-not $datasetId -and -not $chosenDatasetFile){
   "
   You have not provided a dataset json file. Would you like to create and register 
-  a small dataset-Example.json file? (It will use the mnist 10k dataset)
+  a small dataset-Example.json file? (It will use the mnist dataset)
   "
   if(Ask-YesNo){
       $chosenDatasetFile=if($datasetDefinitionFile){$datasetDefinitionFile}else{"dataset-Example.json"}        
@@ -349,7 +357,7 @@ if(-not $datasetId -and -not $chosenDatasetFile){
           "registration": {
             "createNewVersion": true,
             "description": "mnist dataset",
-            "name": "mnist-dataset",
+            "name": "mnist",
             "tags": {
               "sample-tag": "mnist"
             }
@@ -439,11 +447,15 @@ if($environmentName){
 
 # ----------------------------------------------------------------------------
 "
-7. Choose a script file to run"
+7. Choose a script file to run
+"
 
 if($script -and (test-path $script)){
   "Found $script"
   $askScript=$null
+  if( (Split-Path $script -Leaf) -ne 'train.py'){
+    write-warning "You probably have to use train.py as your scripts' entry point filename."
+  }
 }elseif(-not $script){
   $askScript="
   You did not specify a script to run.
@@ -463,9 +475,9 @@ if($askScript){
       "Scikit" { "example-scikit-train-mnist.py" ; break}
       default { "example-no-framework.py" }
     })
-    $script= "scripts/$exampleScript"
-    mkdir scripts
-    cp miscellany/$exampleScript $script
+    $script= "scripts/train.py"
+    New-Item scripts -ErrorAction SilentlyContinue
+    Copy-Item miscellany/$exampleScript $script
     Get-Content $script
   }else{
     write-warning "Halted at 7. Choose a script file because you didn't have one and didn't want an example one"
@@ -548,13 +560,13 @@ if($previousComputeTargetRunConfig){
   if($previousAnyRunConfigs){
     "runconfig files already existed in .azureml but none called $($computeTargetName).runconfig"}
 
-  if(Ask-YesNo "Create a $($computeTargetName).runconfig file?"){
+  if(-not $previousComputeTargetRunConfig -or (Ask-YesNo "Create a $($computeTargetName).runconfig file?")){
 
-    $content= Get-Content miscellany/example.runconfig
-    $content= $content -replace '$computeTargetName',"$computeTargetName"
-    $content= $content -replace '$scriptFile',"$scriptFile"
-    $content= $content -replace '$chosenEnvironmentName',"$chosenEnvironmentName"
-    $content= $content -replace '$datasetId',"$datasetId"
+    $content= (Get-Content miscellany/example.runconfig) -join [Environment]::NewLine
+    $content= $content -replace '\$computeTargetName',"$computeTargetName"
+    $content= $content -replace '\$scriptFile',"$scriptFile"
+    $content= $content -replace '\$chosenEnvironmentName',"$chosenEnvironmentName"
+    $content= $content -replace '\$datasetId',"$datasetId"
 
     Set-Content -Path ".azureml/$($computeTargetName).runconfig" -Value $content
 
@@ -575,9 +587,8 @@ if($previousComputeTargetRunConfig){
 if($submit){
   az ml run submit-script -c $computeTargetName -e "$experimentName" --source-directory "$scriptDir" -t runoutput.json
 }else{
-  "Not running because you didn't specify -submit
-
-  To submit the run, use this command line:
+  "
+  To submit the run, either use the -submit switch or copy this command line:
 
   az ml run submit-script -c $computeTargetName -e $experimentName --source-directory `"$scriptDir`" -t runoutput.json"
 }

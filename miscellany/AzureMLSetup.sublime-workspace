@@ -5,7 +5,23 @@
 		[
 			[
 				"data",
-				"datasetjsonpath"
+				"datasetDefinitionFile"
+			],
+			[
+				"resou",
+				"resourceGroupName"
+			],
+			[
+				"envi",
+				"environment"
+			],
+			[
+				"ml",
+				"mldatasetlist"
+			],
+			[
+				"exist",
+				"existingDatasets"
 			],
 			[
 				"dat",
@@ -50,10 +66,6 @@
 			[
 				"environ",
 				"Environment"
-			],
-			[
-				"resou",
-				"resourceGroup"
 			],
 			[
 				"comm",
@@ -267,7 +279,19 @@
 	],
 	"file_history":
 	[
+		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/scripts/train.py",
+		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/.azureml/mnist.runconfig",
+		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/dataset.json",
+		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/.azureml/conda_dependencies.yml",
+		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/.azureml/cpu-cluster",
+		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/.azureml/config.json",
 		"/Users/chris/Source/Repos/AzureMLSetup/azure-ml-setup.ps1",
+		"/Users/chris/Source/Repos/AzureMLSetup/.git/COMMIT_EDITMSG",
+		"/Users/chris/Source/Repos/AzureMLSetup/README.md",
+		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/vm-list-skus-uksouth-2020-september.json",
+		"/Users/chris/Source/Repos/AzureMLSetup/.git/rebase-merge/git-rebase-todo",
+		"/Users/chris/Downloads/config.json",
+		"/Users/chris/Source/Repos/AzureMLSetup/dataset.json",
 		"/Users/chris/Source/Repos/AzureMLSetup/vm-list-skus-uksouth-2020-september.json",
 		"/Users/chris/Source/Repos/AzureMLSetup/AzureGPUOptions.md",
 		"/Users/chris/Source/Repos/AzureMLSetup/.git/MERGE_MSG",
@@ -382,23 +406,11 @@
 		"/Users/chris/OneDrive/DevMachine/Settings/MegaCli MegaRaid Settings Commands.txt",
 		"/Users/chris/Documents/Wolfram Mathematica/Config/Dimad.nb",
 		"/Users/chris/Documents/Wolfram Mathematica/Config/pastelDarkSolarized.nb",
-		"/Users/chris/OneDrive/w16706 at tvv.tw.txt",
-		"/Users/chris/.config/karabiner/karabiner.json",
-		"/Users/chris/Desktop/Activation Functions Notes.txt",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/TestDocuments/Doc/word/document.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/TestDocuments/out.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/bin/Debug/netcoreapp2.0/TestDocuments/TestTemplate2.docx.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/bin/Debug/netcoreapp2.0/TestDocuments/TestTemplate2 singleline Fields Output..docx.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/bin/Debug/netcoreapp2.0/TestDocuments/TestTemplate2 Multiline Fields Output.docx.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/bin/Debug/netcoreapp2.0/TestDocuments/DocWithoutSplitMergeFieldOrWinstrTextDateRun.docx.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/bin/Debug/netcoreapp2.0/TestDocuments/DocWithWinstrTextDateRun.docx.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/bin/Debug/netcoreapp2.0/TestDocuments/DocWithWinstrTextDateRun Output.docx.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/bin/Debug/netcoreapp2.0/TestDocuments/DocWithSplitMergeField.docx.xml",
-		"/Users/chris/Source/Repos/MailMerge/MailMerge.Tests/bin/Debug/netcoreapp2.0/TestDocuments/DocWithSplitMergeField Output.docx.xml"
+		"/Users/chris/OneDrive/w16706 at tvv.tw.txt"
 	],
 	"find":
 	{
-		"height": 46.0
+		"height": 34.0
 	},
 	"find_in_files":
 	{
@@ -412,28 +424,6 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"NC6",
-			"NC",
-			"computeinstance",
-			"\"size\": \"NC",
-			"\"size\": \"N",
-			"\"name\": \"n",
-			"nc",
-			"per hr",
-			"/hour",
-			"\\.\\d+",
-			"US\\$",
-			" \\d+ GB\\t",
-			" GB",
-			" GB RAM",
-			":|,",
-			"cpu core",
-			" cores\\(s\\)",
-			" cores(s)",
-			" Temporary storage",
-			"</option>",
-			"<option value=\"[^\"]+\">",
-			" <option value=\"[^\"]+\">"
 		],
 		"highlight": false,
 		"in_selection": false,
@@ -441,17 +431,6 @@
 		"regex": true,
 		"replace_history":
 		[
-			"computetarget",
-			" per hr",
-			"per hr",
-			"",
-			"$",
-			"",
-			"GB",
-			"\\t",
-			" cpucores",
-			"cpu core",
-			""
 		],
 		"reverse": false,
 		"show_context": true,
@@ -510,7 +489,7 @@
 	"project": "AzureMLSetup.sublime-project",
 	"replace":
 	{
-		"height": 84.0
+		"height": 64.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -548,7 +527,7 @@
 	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 230.0,
+	"side_bar_width": 219.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
