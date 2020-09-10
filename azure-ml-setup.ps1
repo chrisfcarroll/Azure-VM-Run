@@ -26,7 +26,7 @@ Resources Created
           ├── Dataset
           ├── Computetarget (with a vmSize)
           └── Experiment
-              └── runconfig (which references Dataset & Computetarget)
+              └── runconfig (which references Dataset, Computetarget and a script)
 
 As you can see, the Workspace is the primary Container. 
 - Keeping an empty WorkSpace alive costs about `$1 per day.
@@ -52,17 +52,18 @@ when idle.
 
 5. Attach a local folder on your desktop to the workspace.
 
-6. Define a dataset
+6. Define a Dataset
 
-7. Create a runconfig referencing your script, dataset, and computetarget
+7. Choose an Environment by name
 
-8. Run the runconfig
+8. Create a runconfig referencing your environment, script, dataset, computetarget
+
+9. Run the runconfig
 
 --------------------------------------------------------------------------
 Not covered by this script:
-9. Attach an Azure blob container as a Datastore for large datasets
-10. Upload files to a Datastore
-11. Scaffold and register Environments
+10. Attach an Azure blob container as a Datastore for large datasets
+11. Upload files to a Datastore
 For these steps you may want an example or a tutorial, not a script.
 ----------------------------------------------------------------------------
 
@@ -83,6 +84,8 @@ Param(
     [string]$computeTargetSize='nc6',
   [string]$experimentName= (Split-Path (Get-Location) -Leaf),
   [ValidateScript({Test-Path $_ -PathType 'Leaf'})][string]$datasetDefinitionFile,
+  [string]$environmentName,
+  [ValidateSet('TensorFlow','PyTorch','Tutorial','TensorFlow-2','TensorFlow-1','PyTorch-1.6')][string]$environmentLike,
   [string]$location,
   [switch]$help
 )
@@ -316,12 +319,70 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
 "✅ OK"
 # ----------------------------------------------------------------------------
 "
-7. Create a runconfig referencing your script, dataset, and computetarget
-8. Run the runconfig
+7. Choose an Environment by name
+"
+if($environmentName){
+    az ml environment show  --name $environmentName -w $workspaceName --output table
+    if(-not $?){
+      write-warning "
+      You asked for environment $environmentName , but no such was found.
+      To choose an Azure curated environment, instead use 
+      -environmentFor TensorFlow | PyTorch | Tutorial | ... instead
+      which will find a matching curated Azure ML environment.
+
+      This script doesn't cover creating your own custom environment.
+
+      Halted at 7. Choose an Environment, because your choice wasn't found.
+      "
+      exit
+    }
+  }elseif($environmentLike){
+    "7.1 Looking for an existing environment matching $environmentLike ...
+    "
+    $matchesj=(az ml environment list -w $workspaceName `
+                --query "[?contains(name,`'$environmentLike`')]") `
+                -match '".*"'
+    if($matchesj.Length -eq 0){
+      write-warning "
+      You asked for a curated environment matching $environmentLike , but no such was found.
+      Here are all known environments available to your workspace:
+      "
+      az ml environments list -w $workspaceName --output table
+      write-warning "
+      Halted at 7. Choose an Environment, because your choice $environmentLike wasn't found.
+      "
+      exit
+    }else{
+      $matches=$matches=( $matches | %{ $_.Trim(" ,`"") }  | Sort-Object -Descending)
+      $chosenEnvironmentName=$matches[0]
+      "Found:"
+      $matches
+      "
+      7.1 Choosing $chosenEnvironmentName as the alphabetically last match."
+    }
+  }else{
+    "Choose an environment either with 
+
+    -environmentName <existing-environment-name>
+
+    -environmentFor <string-to-search-in-azure-curated-environments-eg-Tensorflow>
+    "
+
+    write-warning "
+    Halted at 7. Choose an Environment because you didn't."
+  }
+
+
+"✅ OK"
+# ----------------------------------------------------------------------------
+"
+8. Create a runconfig referencing your environment, script, dataset, computetarget
+
+9. Run the runconfig
+
 Not covered: 
-9. Attach an Azure blob container as a Datastore for large datasets
-10. Upload files to a Datastore.
-11. Scaffold and register Environments
+10. Attach an Azure blob container as a Datastore for large datasets
+11. Upload files to a Datastore
 "
 
 #az ml environment scaffold -n myenv -d myenvdirectory

@@ -22,12 +22,13 @@ resources. If you don't have one, you can get a new one for free in about
 What is needed to create, use, & tear down cloud-based ML resources?
 
 [Azure Subscription]
-    └── ResourceGroup (at a location)
-      └── WorkSpace
+    └── ResourceGroup (at a location accessible to your subscription)
+      ├── WorkSpace
       ├── Dataset
       ├── Computetarget (with a vmSize)
+      ├── Environment (the simplest is to choose from the list of curated environments)
       └── Experiment
-          └── runconfig (which references the dataset and the computetarget)
+          └── runconfig (which references all the above and also points to your code to run)
 
 As you can see, the Workspace is the primary Container. 
 - Keeping an empty WorkSpace alive costs about $1 per day.
