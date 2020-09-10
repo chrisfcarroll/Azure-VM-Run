@@ -69,23 +69,41 @@ For these steps you may want an example or a tutorial, not a script.
 
 Usage:
 
-$commandName
-    [[-resourceGroupName] <string>] [[-location] <string>]
-    [[-workspaceName] <string>] 
-    [[-computeTargetName] <string>] [[-computeTargetSize] <string>] 
-    [[-experimentName] <string>] 
-    [[-datasetDefinitionFile] <string>]
+azure-ml-setup.ps1 
+    [[-resourceGroupName] <String>] [[-location] <String>]
+    [[-workspaceName] <String>] 
+    [[-computeTargetName] <String>] [[-computeTargetSize] <String>] 
+    [[-experimentName] <String>] 
+    [[-datasetDefinitionFile] <String>] 
+    [[-environmentMatch] <String>] [[-environmentName] <String>] 
+    [-help] [<CommonParameters>]
+
 #>
 Param(
-  [string]$resourceGroupName,
+  ##Required for step 2 and further. A new or existing Azure ResourceGroup name.
+  ##https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal
+  [string]$resourceGroupName, 
+  ##Required for step 3 and further. A new or existing workspace, which will hold references to 
+  ##your data and computetargets
   [string]$workspaceName,
+  ##Used for steps 4, 8, 9. A new or existing Azure computetarget to run on
   [string]$computeTargetName,
+  ##Only required when creating a new computetarget at step 4. The pre-selected options are the ones with a GPU
   [ValidateSet('nc6','nc12','nc24','nc6v3','nc12v3','nc24v3','nc6promo','nc12promo','nc24promo')]
     [string]$computeTargetSize='nc6',
+  ##Used for steps 5, 8, 9.
   [string]$experimentName= (Split-Path (Get-Location) -Leaf),
+  ##Optional
   [ValidateScript({Test-Path $_ -PathType 'Leaf'})][string]$datasetDefinitionFile,
+  ##Usable for steps 7,8,9 as a convenience. Using this will pick the alphabetically last matching environment,
+  ##which will typically be the one with the highest version number
+  [ValidateSet('TensorFlow','PyTorch','Scikit','PySpark','Minimal','AzureML-Tutorial','TensorFlow-2','TensorFlow-1','PyTorch-1.6')]
+    [string]$environmentMatch,
+  ##Usable for steps 7,8,9 when you know the exact environmentName you require.
+  ##See https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments for Azure-curated environments
   [string]$environmentName,
-  [ValidateSet('TensorFlow','PyTorch','Tutorial','TensorFlow-2','TensorFlow-1','PyTorch-1.6')][string]$environmentLike,
+  ##An Azure region name. Only required when creating a new ResourceGroup at step 2. 
+  ##Thereafter the ResourceGroup is all the location you need.
   [string]$location,
   [switch]$help
 )
@@ -207,7 +225,7 @@ if($workspaceName){
 4. Choose or Create a computetarget $computeTargetName"
 
 if($computeTargetName ){
-  "Looking for existing computetarget called $computeTargetName ..."
+  "Looking for existing computetarget called $computeTargetName ... (please wait a while) ..."
   az ml computetarget show --output table `
             --name $computeTargetName -w $workspaceName -g $resourceGroupName
   if(-not $?){
@@ -272,18 +290,20 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
   "Registering dataset defined by $datasetDefinitionFile"
   az ml dataset register -f "$datasetDefinitionFile" --skip-validation -w $workspaceName -g $resourceGroupName 
   if(-not $?){throw "failed at az ml dataset register -f $datasetDefinitionFile --skip-validation"}
+  $chosenDatasetFile=$datasetDefinitionFile
 }else{
   $mldatasetlist=(az ml dataset list -g $resourceGroupName -w $workspaceName ) -join [System.Environment]::NewLine
   $existingDatasets=(ConvertFrom-Json $mldatasetlist -NoEnumerate)
   if($existingDatasets.Length -gt 0){
     $mldatasetlist
+    $chosenDatasetFile=$null #none chosen but that's fine
   }else{
     "
     You have not provided a dataset json file. Would you like to create and register 
     a small dataset-Example.json file? (It will use the mnist 10k dataset)
     "
     if(Ask-YesNo){
-        $newDDF=if($datasetDefinitionFile){$datasetDefinitionFile}else{"dataset-Example.json"}        
+        $chosenDatasetFile=if($datasetDefinitionFile){$datasetDefinitionFile}else{"dataset-Example.json"}        
         '{
             "datasetType": "File",
             "parameters": {
@@ -303,12 +323,12 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
               }
             },
             "schemaVersion": 1
-          }' > $newDDF
+          }' > $chosenDatasetFile
 
-      Get-Content $newDDF
+      Get-Content $chosenDatasetFile
 
-      az ml dataset register -f "$newDDF" --skip-validation -w $workspaceName -g $resourceGroupName
-      if(-not $?){throw "failed at az ml dataset register -f $($newDDF) --skip-validation  -w $workspaceName -g $resourceGroupName"}
+      az ml dataset register -f "$chosenDatasetFile" --skip-validation -w $workspaceName -g $resourceGroupName
+      if(-not $?){throw "failed at az ml dataset register -f $($chosenDatasetFile) --skip-validation  -w $workspaceName -g $resourceGroupName"}
     }else{
       "Skipped Step 6. Define a dataset
       "
@@ -322,6 +342,7 @@ if( ($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
 7. Choose an Environment by name
 "
 if($environmentName){
+    $chosenEnvironmentName=$environmentName
     az ml environment show  --name $environmentName -w $workspaceName --output table
     if(-not $?){
       write-warning "
@@ -336,25 +357,25 @@ if($environmentName){
       "
       exit
     }
-  }elseif($environmentLike){
-    "7.1 Looking for an existing environment matching $environmentLike ...
+  }elseif($environmentMatch){
+    "7.1 Looking for an existing environment matching $environmentMatch ...
     "
     $matchesj=(az ml environment list -w $workspaceName `
-                --query "[?contains(name,`'$environmentLike`')]") `
+                --query "[?contains(name,`'$environmentMatch`')].name") `
                 -match '".*"'
     if($matchesj.Length -eq 0){
       write-warning "
-      You asked for a curated environment matching $environmentLike , but no such was found.
+      You asked for a curated environment matching $environmentMatch , but no such was found.
       Here are all known environments available to your workspace:
       "
       az ml environments list -w $workspaceName --output table
       write-warning "
-      Halted at 7. Choose an Environment, because your choice $environmentLike wasn't found.
+      Halted at 7. Choose an Environment, because your choice $environmentMatch wasn't found.
       "
       exit
     }else{
-      $matches=$matches=( $matches | %{ $_.Trim(" ,`"") }  | Sort-Object -Descending)
-      $chosenEnvironmentName=$matches[0]
+      $matches=( $matchesj | %{ $_.Trim(" ,`"") })
+      $chosenEnvironmentName=($matches | Sort-Object -Descending)[0]
       "Found:"
       $matches
       "
@@ -369,7 +390,7 @@ if($environmentName){
     "
 
     write-warning "
-    Halted at 7. Choose an Environment because you didn't."
+    Halted at 7. Choose an Environment, because you didn't."
   }
 
 
@@ -378,6 +399,20 @@ if($environmentName){
 "
 8. Create a runconfig referencing your environment, script, dataset, computetarget
 
+Got:
+   ResourceGroup  : $resourceGroupName 
+   Workspace      : $workspaceName 
+   ComputeTarget  : $computeTargetName 
+   Environment    : $chosenEnvironmentName
+   New Dataset?   : $(if($chosenDatasetFile){$chosenDatasetFile}else{'(no new dataset defined)'})
+   Experiment Name: $experimentName
+   Local directory attached? : $(if(test-path ".azureml/"){'Yes'}else{'No'})
+   "
+
+
+"✅ OK"
+# ----------------------------------------------------------------------------
+"
 9. Run the runconfig
 
 Not covered: 
