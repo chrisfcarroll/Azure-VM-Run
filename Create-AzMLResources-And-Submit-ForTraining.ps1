@@ -4,7 +4,7 @@
 
 <#
 .Synopsis
-Ensure-AzMLResources-And-Submit-ForTraining.ps1 can perform one or all of:
+Create-AzMLResources-And-Submit-ForTraining.ps1 can perform one or all of:
   -create the nested sequence of Azure resources needed to run a script on an Azure ML computetarget 
   -create a runconfig file for the script and the resources
   -submit the run
@@ -79,7 +79,7 @@ Not covered by this script:
 
 Usage:
 
-Ensure-AzMLResources-And-Submit-ForTraining.ps1 
+Create-AzMLResources-And-Submit-ForTraining.ps1 
     [[-resourceGroupName] <StringName> [-location <StringAzureLocation>]] 
     [[-workspaceName] <StringName>] 
     [[-computeTargetName] <StringName> [-computeTargetSize <StringvmSize>]] 
@@ -89,12 +89,13 @@ Ensure-AzMLResources-And-Submit-ForTraining.ps1
     [-script <path>] 
     [-attachFolder [ Yes | No | Ask ] ] 
     [-submit] 
-    [-noConfirm]   
+    [-noConfirm]
+    [-accountTypePrefix [Standard]]
     [-help] 
     [<CommonParameters>]    
 
 .Example
-Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -location uksouth
+Create-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -location uksouth
 
 -creates or confirms a resourceGroup named ml1 in Azure location uksouth,
 -creates or confirms a workspace named ml1 in that resourceGroup
@@ -104,7 +105,7 @@ Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -location uksouth
 -then halts telling you to specify an environment.
 
 .Example
-Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -environmentFor Tensorflow
+Create-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -environmentFor Tensorflow
 
 -confirms a resourceGroup named ml1 exists in your current default location
 -confirms or creates a workspace named ml1 in that resourceGroup
@@ -118,7 +119,7 @@ Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -environmentFor Tens
   -shows you the command line to copy to submit a training run
   
 .Example
-Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 ml1 `
+Create-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 ml1 `
         -environmentFor TensorFlow `
         -datasetName mnist-dataset `
         -script ./scripts/train.py `
@@ -142,10 +143,10 @@ Will do these steps:
 Param(
   ##Required for step 2 and further. A new or existing Azure ResourceGroup name.
   ##https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal
-  [Parameter(Position=0)][string]$resourceGroupName, 
+  [Parameter(Position=0)][Alias('g')][string]$resourceGroupName, 
   ##Required for step 3 and further. A new or existing workspace, which will hold references to 
   ##your data and computetargets
-  [Parameter(Position=1)][string]$workspaceName,
+  [Parameter(Position=1)][Alias('w')][string]$workspaceName,
   ##Used for step 4, required to create a runconfig. A new or existing Azure computetarget to run on
   [Parameter(Position=2)][string]$computeTargetName,
   ##Required to create a runconfig, but defaults to current directory name
@@ -177,8 +178,10 @@ Param(
   ##Thereafter the ResourceGroup is all the location you need.
   [string]$location,
   ##Only required when creating a new computetarget at step 4. The pre-selected options are the ones with a GPU
-  [ValidateSet('nc6','nc12','nc24','nc6v3','nc12v3','nc24v3','nc6promo','nc12promo','nc24promo')]
+  [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4')]
     [string]$computeTargetSize='nc6',
+  ## Prefixes the computeTargetSize, reflects what Azure tier you are on.
+  [string]$accountTypePrefix="Standard",
   ##show this help text
   [switch]$help
 )
@@ -326,12 +329,12 @@ if($computeTargetName ){
 
     Ask-YesElseThrow
     az ml computetarget create amlcompute -n $computeTargetName --min-nodes 0 --max-nodes 1 `
-        --vm-size Standard_$computeTargetSize -w $workspaceName -g $resourceGroupName
+        --vm-size $($accountTypePrefix)_$computeTargetSize -w $workspaceName -g $resourceGroupName
 
     if(-not $?){
       throw "failed at az ml computetarget create amlcompute 
         -n computeTargetName --min-nodes 0 --max-nodes 1 
-        --vm-size Standard_$computeTargetSize -w $workspaceName -g $resourceGroupName"
+        --vm-size $($accountTypePrefix)_$computeTargetSize -w $workspaceName -g $resourceGroupName"
     }
   }
 }else{
@@ -410,14 +413,16 @@ if($environmentName){
     $matchesj=(az ml environment list -w $workspaceName  -g $resourceGroupName `
                 --query "[?contains(name,`'$environmentFor`')].name") `
                 -match '".*"'
-    if($matchesj.Length -eq 0){
+
+    if(-not $matchesj -or ($matchesj.Length -eq 0)){
       write-warning "
       You asked for a curated environment matching $environmentFor , but no such was found.
       Here are all known environments available to your workspace:
       "
       az ml environment list -w $workspaceName -g $resourceGroupName --output table
       write-warning "
-      Halted at 5. Choose an Environment, because your choice $environmentFor wasn't found.
+      Halted at 5. Choose an Environment, because your choice $environmentFor wasn't 
+      found. (N.B. the match is case-sensitive).
       "
       exit
     }else{
@@ -623,9 +628,9 @@ if(test-path ".azureml/"){
    Workspace      : $workspaceName 
    ComputeTarget  : $computeTargetName 
    Environment    : $chosenEnvironmentName
-   Script         : $($(if(test-path $script){"$script"}else{'No'}))
+   Script         : $($(if(test-path $script){"$script"}else{'(no)'}))
    DatasetId?     : $datasetId
-   New Dataset?   : $(if($chosenDatasetFile){$chosenDatasetFile}else{'(no new dataset defined)'})
+   New Dataset?   : $(if($chosenDatasetFile){$chosenDatasetFile}else{'(no)'})
    Experiment Name: $experimentName
    Local directory attached? : $(if(test-path ".azureml/"){'Yes'}else{'No'})
    "
@@ -675,17 +680,20 @@ if($previousExperimentRunConfig){
 
 # ----------------------------------------------------------------------------
 "
-10. Submit the runconfig $runconfigFile ...
-"
+10. Submit the runconfig $runconfigFile 
 
+Command to run:
+
+az ml run submit-script -c $computeTargetName -e $experimentName --source-directory `"$scriptDir`" -t runoutput.json
+"
 if($submit){
+  "executing ..."
   az ml run submit-script -c $computeTargetName -e "$experimentName" --source-directory "$scriptDir" -t runoutput.json
 }else{
-  "
-  To submit the run, either use the -submit switch or copy this command line:
-
-  az ml run submit-script -c $computeTargetName -e $experimentName --source-directory `"$scriptDir`" -t runoutput.json"
+  "To submit the run, either use the -submit switch or copy the commandline."
 }
+
+
 
 # ----------------------------------------------------------------------------
 

@@ -1,0 +1,142 @@
+[
+  {
+    "gpus": 1,
+    "name": "Standard_NV6",
+    "size": "NV6"
+  },
+  {
+    "gpus": 2,
+    "name": "Standard_NV12",
+    "size": "NV12"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NV24",
+    "size": "NV24"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NV6_Promo",
+    "size": "NV6_Promo"
+  },
+  {
+    "gpus": 2,
+    "name": "Standard_NV12_Promo",
+    "size": "NV12_Promo"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NV24_Promo",
+    "size": "NV24_Promo"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NC6",
+    "size": "NC6"
+  },
+  {
+    "gpus": 2,
+    "name": "Standard_NC12",
+    "size": "NC12"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NC24",
+    "size": "NC24"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NC24r",
+    "size": "NC24r"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NC6_Promo",
+    "size": "NC6_Promo"
+  },
+  {
+    "gpus": 2,
+    "name": "Standard_NC12_Promo",
+    "size": "NC12_Promo"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NC24_Promo",
+    "size": "NC24_Promo"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NC24r_Promo",
+    "size": "NC24r_Promo"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NV4as_v4",
+    "size": "NV4as_v4"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NV8as_v4",
+    "size": "NV8as_v4"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NV16as_v4",
+    "size": "NV16as_v4"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NV32as_v4",
+    "size": "NV32as_v4"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NV6s_v2",
+    "size": "NV6s_v2"
+  },
+  {
+    "gpus": 2,
+    "name": "Standard_NV12s_v2",
+    "size": "NV12s_v2"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NV24s_v2",
+    "size": "NV24s_v2"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NV12s_v3",
+    "size": "NV12s_v3"
+  },
+  {
+    "gpus": 2,
+    "name": "Standard_NV24s_v3",
+    "size": "NV24s_v3"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NV48s_v3",
+    "size": "NV48s_v3"
+  },
+  {
+    "gpus": 1,
+    "name": "Standard_NC6s_v3",
+    "size": "NC6s_v3"
+  },
+  {
+    "gpus": 2,
+    "name": "Standard_NC12s_v3",
+    "size": "NC12s_v3"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NC24rs_v3",
+    "size": "NC24rs_v3"
+  },
+  {
+    "gpus": 4,
+    "name": "Standard_NC24s_v3",
+    "size": "NC24s_v3"
+  }
+]

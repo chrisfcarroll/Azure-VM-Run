@@ -1,7 +1,7 @@
 # Create Azure Machine Learning Resources for Training
 
 ```
-Ensure-AzMLResources-And-Submit-ForTraining.ps1 
+Create-AzMLResources-And-Submit-ForTraining.ps1 
     [[-resourceGroupName] <String> [-location <StringLocationName>]] 
     [[-workspaceName] <String>] 
     [[-computeTargetName] <String> [-computeTargetSize <StringvmSize>]] 
@@ -16,7 +16,7 @@ Ensure-AzMLResources-And-Submit-ForTraining.ps1
     [<CommonParameters>]
 ```
 
-This repository is primarily about the script file `Ensure-AzMLResources-And-Submit-ForTraining.ps1`  which will help you to perform one or all of:
+This repository is primarily about the script file `Create-AzMLResources-And-Submit-ForTraining.ps1`  which will help you to perform one or all of:
   -create the nested sequence of Azure resources needed to run a script on an Azure ML computetarget 
   -create a runconfig file for the script and the resources
   -submit the run
@@ -52,7 +52,7 @@ connect to your local desktop.
 #### Examples
 
 ```
-Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -location uksouth
+Create-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -location uksouth
 ```
 Creates:
   -a resourceGroup named ml1 in Azure location uksouth,
@@ -61,7 +61,7 @@ Creates:
 and stops
   
 ```
-Ensure-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 ml1
+Create-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 ml1
   -datasetName mnist-dataset 
   -environmentFor TensorFlow 
   -script ./scripts/train.py

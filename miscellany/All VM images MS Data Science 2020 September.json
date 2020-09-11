@@ -1,0 +1,114 @@
+[
+  {
+    "offer": "linux-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvm",
+    "urn": "microsoft-ads:linux-data-science-vm:linuxdsvm:19.01.01",
+    "version": "19.01.01"
+  },
+  {
+    "offer": "linux-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvm",
+    "urn": "microsoft-ads:linux-data-science-vm:linuxdsvm:19.12.17",
+    "version": "19.12.17"
+  },
+  {
+    "offer": "linux-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvm",
+    "urn": "microsoft-ads:linux-data-science-vm:linuxdsvm:20.08.06",
+    "version": "20.08.06"
+  },
+  {
+    "offer": "linux-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvmbyol",
+    "urn": "microsoft-ads:linux-data-science-vm:linuxdsvmbyol:19.01.01",
+    "version": "19.01.01"
+  },
+  {
+    "offer": "linux-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvmbyol",
+    "urn": "microsoft-ads:linux-data-science-vm:linuxdsvmbyol:19.12.17",
+    "version": "19.12.17"
+  },
+  {
+    "offer": "linux-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvmbyol",
+    "urn": "microsoft-ads:linux-data-science-vm:linuxdsvmbyol:20.08.06",
+    "version": "20.08.06"
+  },
+  {
+    "offer": "linux-data-science-vm-ubuntu",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvmubuntu",
+    "urn": "microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.00",
+    "version": "20.01.00"
+  },
+  {
+    "offer": "linux-data-science-vm-ubuntu",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvmubuntu",
+    "urn": "microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09",
+    "version": "20.01.09"
+  },
+  {
+    "offer": "linux-data-science-vm-ubuntu",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvmubuntubyol",
+    "urn": "microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntubyol:20.01.00",
+    "version": "20.01.00"
+  },
+  {
+    "offer": "linux-data-science-vm-ubuntu",
+    "publisher": "microsoft-ads",
+    "sku": "linuxdsvmubuntubyol",
+    "urn": "microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntubyol:20.01.09",
+    "version": "20.01.09"
+  },
+  {
+    "offer": "standard-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "standard-data-science-vm",
+    "urn": "microsoft-ads:standard-data-science-vm:standard-data-science-vm:2018.07.00",
+    "version": "2018.07.00"
+  },
+  {
+    "offer": "standard-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "win12-data-science-vm-csp",
+    "urn": "microsoft-ads:standard-data-science-vm:win12-data-science-vm-csp:2018.07.00",
+    "version": "2018.07.00"
+  },
+  {
+    "offer": "windows-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "windows2016",
+    "urn": "microsoft-ads:windows-data-science-vm:windows2016:19.08.09",
+    "version": "19.08.09"
+  },
+  {
+    "offer": "windows-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "windows2016",
+    "urn": "microsoft-ads:windows-data-science-vm:windows2016:20.01.10",
+    "version": "20.01.10"
+  },
+  {
+    "offer": "windows-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "windows2016byol",
+    "urn": "microsoft-ads:windows-data-science-vm:windows2016byol:19.08.09",
+    "version": "19.08.09"
+  },
+  {
+    "offer": "windows-data-science-vm",
+    "publisher": "microsoft-ads",
+    "sku": "windows2016byol",
+    "urn": "microsoft-ads:windows-data-science-vm:windows2016byol:20.02.10",
+    "version": "20.02.10"
+  }
+]
