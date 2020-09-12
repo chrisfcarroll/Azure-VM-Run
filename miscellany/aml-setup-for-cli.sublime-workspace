@@ -4,6 +4,42 @@
 		"selected_items":
 		[
 			[
+				"vm",
+				"vmIp"
+			],
+			[
+				"exi",
+				"existingMachine"
+			],
+			[
+				"wor",
+				"workingFolder"
+			],
+			[
+				"comman",
+				"commandToRun"
+			],
+			[
+				"comm",
+				"commandToRun"
+			],
+			[
+				"copy",
+				"copyLocalFolder"
+			],
+			[
+				"pu",
+				"publicIpAddress"
+			],
+			[
+				"work",
+				"workingFolder"
+			],
+			[
+				"cop",
+				"copyLocalFolder"
+			],
+			[
 				"Py",
 				"PySpark"
 			],
@@ -82,10 +118,6 @@
 			[
 				"datase",
 				"DatasetName"
-			],
-			[
-				"exi",
-				"existingDatasets"
 			],
 			[
 				"das",
@@ -188,20 +220,8 @@
 				"computetargets"
 			],
 			[
-				"work",
-				"workspaceName"
-			],
-			[
-				"wor",
-				"workspaceName"
-			],
-			[
 				"environ",
 				"Environment"
-			],
-			[
-				"comm",
-				"commandName"
 			],
 			[
 				"Reou",
@@ -408,9 +428,9 @@
 	],
 	"file_history":
 	[
+		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzVM-ForDataSciencePython.ps1",
 		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzMLResources-And-Submit-ForTraining.ps1",
 		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/ml1",
-		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzVM-ForDataSciencePython.ps1",
 		"/Users/chris/Source/Repos/AzureMLSetup/ml1.runconfig",
 		"/Users/chris/Source/Repos/AzureMLSetup/dataset-Example.json",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/conda_dependencies.yml",
@@ -539,7 +559,7 @@
 	],
 	"find":
 	{
-		"height": 46.0
+		"height": 34.0
 	},
 	"find_in_files":
 	{
@@ -554,6 +574,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"$vm",
 			"environmentFor",
 			"conda",
 			"replace",
@@ -581,6 +602,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"$vmIp",
 			"runconfigPath",
 			"pricingTier",
 			"$pricingTier"
