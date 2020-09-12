@@ -4,6 +4,50 @@
 		"selected_items":
 		[
 			[
+				"Py",
+				"PySpark"
+			],
+			[
+				"chose",
+				"chosenEnvironmentName"
+			],
+			[
+				"Run",
+				"runconfig"
+			],
+			[
+				"Ask",
+				"Ask-YesNo"
+			],
+			[
+				"loca",
+				"copyLocalFolder"
+			],
+			[
+				"contain",
+				"container"
+			],
+			[
+				"azure",
+				"azureml"
+			],
+			[
+				"comp",
+				"computeTargetSize"
+			],
+			[
+				"computetar",
+				"computetarget"
+			],
+			[
+				"specif",
+				"specifying"
+			],
+			[
+				"Vali",
+				"ValidateSet"
+			],
+			[
 				"image",
 				"imageUrn"
 			],
@@ -142,10 +186,6 @@
 			[
 				"Compute",
 				"computetargets"
-			],
-			[
-				"comp",
-				"computetarget"
 			],
 			[
 				"work",
@@ -364,15 +404,22 @@
 	"expanded_folders":
 	[
 		"/Users/chris/Source/Repos/AzureMLSetup",
-		"/Users/chris/Source/Repos/AzureMLSetup/.azureml",
-		"/Users/chris/Source/Repos/AzureMLSetup/miscellany"
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml"
 	],
 	"file_history":
 	[
+		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzMLResources-And-Submit-ForTraining.ps1",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/ml1",
+		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzVM-ForDataSciencePython.ps1",
+		"/Users/chris/Source/Repos/AzureMLSetup/ml1.runconfig",
+		"/Users/chris/Source/Repos/AzureMLSetup/dataset-Example.json",
+		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/conda_dependencies.yml",
+		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/example.runconfig",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/docker",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/local",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/conda_dependencies.yml",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/Az Queries with JMESPath Examples.md",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/All VM images MS Data Science 2020 September.json",
-		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzVM-ForDataSciencePython.ps1",
-		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/conda_dependencies.yml",
 		"/Users/chris/Source/Repos/AzureMLSetup/Ensure-AzMLResources-And-Submit-ForTraining.ps1",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/All VM images Offer Ubuntu  2020 September.json",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/generate-runconfig.py",
@@ -382,7 +429,6 @@
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/All ML Environments Full Details uksouth 2020-September.json",
 		"/Users/chris/Source/Repos/AzureMLSetup/.git/COMMIT_EDITMSG",
 		"/Users/chris/Source/Repos/AzureMLSetup/README.md",
-		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzMLResources-And-Submit-ForTraining.ps1",
 		"/Users/chris/Source/Repos/AzureMLSetup/azure-ml-setup.ps1",
 		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/train-model.sh",
 		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/scripts/train.py",
@@ -489,14 +535,7 @@
 		"/Volumes/CHRIS/BEC.txt",
 		"/Users/chris/Library/Safari/Bookmarks.plist",
 		"/Users/chris/Source/Scratch/TFLearning/log.txt",
-		"/Users/chris/Source/Scratch/TFLearning/log.text",
-		"/private/var/folders/2g/vfmd35sn3qs5h8rnfcxtwhk00000gn/T/com.microsoft.Outlook/Outlook_MessageSource_2020-08-04 16:06:10 +0000_0",
-		"/Volumes/CHRIS/May personal.txt",
-		"/Users/chris/OneDrive/My Notes/BStudy Notes/Gen 15.txt",
-		"/Users/chris/OneDrive/My Notes/BStudy Notes/Gen 14 Structure.txt",
-		"/Users/chris/OneDrive/My Notes/BStudy Notes/Gen 14-15.txt",
-		"/Users/chris/OneDrive - Birchwood Evangelical Church/Libraries/Library/Source Code/greyscale for ascii art.txt",
-		"/Users/chris/Source/Scratch/TFLearning/.gitignore"
+		"/Users/chris/Source/Scratch/TFLearning/log.text"
 	],
 	"find":
 	{
@@ -507,6 +546,7 @@
 		"height": 151.0,
 		"where_history":
 		[
+			""
 		]
 	},
 	"find_state":
@@ -514,6 +554,22 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"environmentFor",
+			"conda",
+			"replace",
+			"framework",
+			"conda",
+			"dataReferences",
+			"a",
+			"previous",
+			"runconfigpath",
+			"runconfigFile",
+			"targetPath",
+			"$targetPath",
+			"runconfig",
+			"pricingTier",
+			"accountTypePrefix",
+			"$account_type_prefix",
 			"data-science",
 			"data science",
 			"data",
@@ -522,9 +578,12 @@
 		"highlight": false,
 		"in_selection": false,
 		"preserve_case": false,
-		"regex": true,
+		"regex": false,
 		"replace_history":
 		[
+			"runconfigPath",
+			"pricingTier",
+			"$pricingTier"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -579,7 +638,7 @@
 	"project": "aml-setup-for-cli.sublime-project",
 	"replace":
 	{
-		"height": 64.0
+		"height": 84.0
 	},
 	"save_all_on_build": true,
 	"select_file":

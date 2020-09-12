@@ -90,7 +90,7 @@ Create-AzMLResources-And-Submit-ForTraining.ps1
     [-attachFolder [ Yes | No | Ask ] ] 
     [-submit] 
     [-noConfirm]
-    [-accountTypePrefix [Standard]]
+    [-pricingTier [Standard]]
     [-help] 
     [<CommonParameters>]    
 
@@ -153,7 +153,7 @@ Param(
   [Parameter(Position=3)][string]$experimentName= (Split-Path (Get-Location) -Leaf),
   ##Usable for step 7. Using this will pick the alphabetically last matching environment,
   ##which will typically be the one with the highest version number
-  [ValidateSet('TensorFlow','PyTorch','Scikit','PySpark','Minimal','AzureML-Tutorial','TensorFlow-2','TensorFlow-1','PyTorch-1.6')]
+  [ValidateSet('TensorFlow','PyTorch','Scikit','PySpark','CNTK','Minimal','AzureML-Tutorial','TensorFlow-2','TensorFlow-1','PyTorch-1.6')]
     [string]$environmentFor,
   ##Usable for step 7 when you know the exact environmentName you require.
   ##See https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments for Azure-curated environments
@@ -180,8 +180,9 @@ Param(
   ##Only required when creating a new computetarget at step 4. The pre-selected options are the ones with a GPU
   [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4')]
     [string]$computeTargetSize='nc6',
-  ## Prefixes the computeTargetSize, reflects what Azure tier you are on.
-  [string]$accountTypePrefix="Standard",
+
+  ##Azure pricing tier is combined with computeTargetSize when specifying a new computetarget
+  [ValidateSet('Free', 'Shared', 'Basic', 'Standard', 'Premium', 'Isolated')][string]$pricingTier="Standard",
   ##show this help text
   [switch]$help
 )
@@ -314,9 +315,8 @@ if($workspaceName){
 
 # ----------------------------------------------------------------------------
 "
-3. Choose or Create a computetarget $computeTargetName
+3. Choose or Create a computetarget $computeTargetName $($pricingTier)_$computeTargetSize
 "
-
 if($computeTargetName ){
   "Looking for existing computetarget called $computeTargetName ... (please wait a while) ..."
   az ml computetarget show --output table `
@@ -324,17 +324,17 @@ if($computeTargetName ){
   if(-not $?){
     "... none found.
 
-    3.1 Create a new computetarget $computeTargetName of size $($computeTargetSize)? 
+    3.1 Create a new computetarget $computeTargetName of size $($pricingTier)_$($computeTargetSize)? 
     (This will be created with min-nodes=0 and max-nodes=1 so it will be free when not in use)"
 
     Ask-YesElseThrow
     az ml computetarget create amlcompute -n $computeTargetName --min-nodes 0 --max-nodes 1 `
-        --vm-size $($accountTypePrefix)_$computeTargetSize -w $workspaceName -g $resourceGroupName
+        --vm-size "$($pricingTier)_$computeTargetSize" -w $workspaceName -g $resourceGroupName
 
     if(-not $?){
       throw "failed at az ml computetarget create amlcompute 
         -n computeTargetName --min-nodes 0 --max-nodes 1 
-        --vm-size $($accountTypePrefix)_$computeTargetSize -w $workspaceName -g $resourceGroupName"
+        --vm-size $($pricingTier)_$computeTargetSize -w $workspaceName -g $resourceGroupName"
     }
   }
 }else{
@@ -366,19 +366,19 @@ if($experimentName){"✅ OK"}else{
 #
 # Stop here unless something more has been specified
 
-$previousExperimentRunConfig=(Resolve-path ".azureml/$($experimentName).runconfig" -ErrorAction SilentlyContinue)
-$previousAnyRunConfigs=(test-path '.azureml/*.runconfig')
 $noMoreParametersSpecified=  `
   -not (($datasetDefinitionFile, $datasetName, $datasetId, $environmentName, $environmentFor, $submit) -ne "") `
   -and ($experimentName -eq (Split-Path (Get-Location) -Leaf)) `
   -and ($script -eq "scripts/train.py") `
   -and ($attachFolder -eq 'Ask') `
 
-if($noMoreParametersSpecified -and -not $previousExperimentRunConfig){
+if($noMoreParametersSpecified){
 
-    "You have provisioned the resources needed. To carry on, specify parameters for the further steps:
+    "You have provisioned the resources needed. 
+    To generate a runconfig file, you still need an Environment and a Script (optionally, also a dataset).
+
     -environmentName | -environmentFor
-    [ -DatasetName -datasetDefinitionFile -DatasetId ]
+    [ -DatasetName | -datasetDefinitionFile | -DatasetId ]
     [ -attachFolder ]
     [ -script='scripts/train.py' ]
     [ -submit ]
@@ -620,6 +620,26 @@ if(test-path ".azureml/"){
 
 # ----------------------------------------------------------------------------
 "
+9. Deduce framework from Environment $chosenEnvironmentName
+"
+switch -wildcard ($chosenEnvironmentName){
+
+  "*PySpark*"     { $framework = "PySpark"}
+  "*CNTK*"        { $framework = "CNTK"}
+  "*TensorFlow*"  { $framework = "TensorFlow"}
+  "*PyTorch*"     { $framework = "PyTorch"}
+  "Python"        { $framework = "Python"}
+  Default         { 
+          write-warning "You rchosen environment didn't match any of TensorFlow,PyTorch,PySpark,CNTK so setting framework to Python"
+          $framework = "Python"
+        }
+}
+
+"Set framework to $framework"
+"✅ OK"
+
+# ----------------------------------------------------------------------------
+"
 9. Create a runconfig referencing your environment, script, dataset, computetarget
 "
 
@@ -635,15 +655,18 @@ if(test-path ".azureml/"){
    Local directory attached? : $(if(test-path ".azureml/"){'Yes'}else{'No'})
    "
 
-if($previousExperimentRunConfig){
-  "
-  runconfig file $previousExperimentRunConfig already exists.
-  "
-  write-warning "If you didn't want to use it, delete it and re-run this script
-  "
-  $runconfigFile=$previousExperimentRunConfig
+$runconfigPath= "$(if(test-path .azureml){'.azureml/'})$experimentName.runconfig"
 
-}elseif(-not $chosenEnvironmentName -or -not $experimentName -or -not $script){
+if(test-path $runconfigPath){
+  "
+  runconfig file $runconfigPath already exists.
+  "
+  If(-not (Ask-YesNo "Delete it?")){
+    write-warning "Halted at 9. Create runconfig because one already exists and you said don't delete it."
+  }
+}
+
+if(-not $chosenEnvironmentName -or -not $experimentName -or -not $script){
 
   "
   You must still specify:"
@@ -656,39 +679,29 @@ if($previousExperimentRunConfig){
 
 }else{
 
-  if($previousAnyRunConfigs){
-    "runconfig files already existed in .azureml but none called $($computeTargetName).runconfig"}
+  $content= (Get-Content miscellany/example.runconfig) -join [Environment]::NewLine
+  $content= $content -replace '\$computeTargetName',"$computeTargetName"
+  $content= $content -replace '\$scriptFile',"$scriptFile"
+  $content= $content -replace '\$chosenEnvironmentName',"$chosenEnvironmentName"
+  $content= $content -replace '\$datasetId',"$datasetId"
+  $content= $content -replace '\$framework',"$framework"
+  
+  Set-Content -Path $runconfigPath -Value $content
 
-  if(-not $previousExperimentRunConfig -or (Ask-YesNo "Create a $($computeTargetName).runconfig file?")){
-
-    $content= (Get-Content miscellany/example.runconfig) -join [Environment]::NewLine
-    $content= $content -replace '\$computeTargetName',"$computeTargetName"
-    $content= $content -replace '\$scriptFile',"$scriptFile"
-    $content= $content -replace '\$chosenEnvironmentName',"$chosenEnvironmentName"
-    $content= $content -replace '\$datasetId',"$datasetId"
-
-    Set-Content -Path ".azureml/$($computeTargetName).runconfig" -Value $content
-
-  }else{
-    write-warning `
-    "Stopped at 9. Create a runconfig because no $($computeTargetName).runconfig exists and you said to not create one."
-  }
-
-  $runconfigFile= (Resolve-path ".azureml/$($computeTargetName).runconfig")
 }
 "✅ OK"
 
 # ----------------------------------------------------------------------------
 "
-10. Submit the runconfig $runconfigFile 
+10. Submit $runconfigPath
 
 Command to run:
 
-az ml run submit-script -c $computeTargetName -e $experimentName --source-directory `"$scriptDir`" -t runoutput.json
+az ml run submit-script -c $experimentName -e $experimentName --source-directory `"$scriptDir`" -w $workspaceName -g $resourceGroupName  -t runoutput.json
 "
 if($submit){
   "executing ..."
-  az ml run submit-script -c $computeTargetName -e "$experimentName" --source-directory "$scriptDir" -t runoutput.json
+  az ml run submit-script -c $experimentName -e "$experimentName" --source-directory "$scriptDir" -w $workspaceName -g $resourceGroupName  -t runoutput.json
 }else{
   "To submit the run, either use the -submit switch or copy the commandline."
 }

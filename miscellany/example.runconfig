@@ -4,8 +4,8 @@ script: $scriptFile
 arguments: []
 # The name of the compute target to use for this run.
 target: $computeTargetName
-# Framework to execute inside. Allowed values are "Python" ,  "PySpark", "CNTK",  "TensorFlow", and "PyTorch".
-framework: Python
+# Framework to execute inside. Allowed values are "Python" , "PySpark", "CNTK",  "TensorFlow", and "PyTorch".
+framework: $framework
 # Communicator for the given framework. Allowed values are "None" ,  "ParameterServer", "OpenMpi", and "IntelMpi".
 communicator: None
 # Maximum allowed duration for the run.
@@ -30,13 +30,14 @@ environment:
 # Path to the conda dependencies file to use for this run. If a project
 # contains multiple programs with different sets of dependencies, it may be
 # convenient to manage those environments with separate files.
-    condaDependenciesFile: .azureml/conda_dependencies.yml
+# was .azureml/conda_dependencies.yml
+    condaDependenciesFile: 
 # The base conda environment used for incremental environment creation.
     baseCondaEnvironment:
 # Docker details
   docker:
 # Probably has to be true. Set True to perform this run inside a Docker container.
-    enabled: true
+    enabled: false
 # Base image used for Docker-based runs. Mutually exclusive with base_dockerfile.
     baseImage: mcr.microsoft.com/azureml/intelmpi2018.3-ubuntu16.04:20200821.v1
 # Base Dockerfile used for Docker-based runs. Mutually exclusive with base_image
@@ -125,8 +126,6 @@ paralleltask:
   workerCountPerNode: 1
 # Worker exit codes to terminate job.
   terminalExitCodes:
-# data reference configuration details
-dataReferences: {}
 # The configuration that describes how to make data available for the run.
 # data reference configuration details
 dataReferences: {}
