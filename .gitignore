@@ -3,3 +3,4 @@ dataset-Example.json
 miscellany/outputs/
 dataset-Example.json
 ml1.runconfig
+runoutput*.json

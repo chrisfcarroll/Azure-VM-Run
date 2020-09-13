@@ -7,6 +7,12 @@ from tensorflow.data import Dataset
 import os
 from azureml.core import Run
 
+
+print("{} | example-tensorflow-train-mnist.py | Copied from AzureMLSetup/scripts/example-tensorflow-train-mnist.py".format(os.getcwd()))
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+azureMLRun = Run.get_context()
+azureMLRun.log("example-tensorflow-train-mnist.py", os.getcwd())
+
 def get_mnist_dataset() -> ((ndarray, ndarray), (ndarray, ndarray)):
     xtrain:ndarray;ytrain:ndarray;xval:ndarray;yval:ndarray
 
@@ -25,9 +31,6 @@ def get_mnist_dataset() -> ((ndarray, ndarray), (ndarray, ndarray)):
 
     return ds_train,ds_val
 
-azureMLRun = Run.get_context()
-
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 train_ds, val_ds=get_mnist_dataset()
 

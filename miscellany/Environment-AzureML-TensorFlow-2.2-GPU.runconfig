@@ -1,19 +1,84 @@
 # The script to run.
-script: $scriptFile
+script: train.py
 # The arguments to the script file.
 arguments: []
 # The name of the compute target to use for this run.
-target: $computeTargetName
-# Framework to execute inside. Allowed values are "Python" , "PySpark", "CNTK",  "TensorFlow", and "PyTorch".
-framework: $framework
+target: local
+# Framework to execute inside. Allowed values are "Python" ,  "PySpark", "CNTK",  "TensorFlow", and "PyTorch".
+framework: TensorFlow
 # Communicator for the given framework. Allowed values are "None" ,  "ParameterServer", "OpenMpi", and "IntelMpi".
-communicator: $communicator
+communicator: OpenMpi
 # Maximum allowed duration for the run.
 maxRunDurationSeconds:
 # Number of nodes to use for running job.
 nodeCount: 1
 # Environment details.
-environment: $environmentJson
+environment:
+{
+    "databricks": {
+      "eggLibraries": [],
+      "jarLibraries": [],
+      "mavenLibraries": [],
+      "pypiLibraries": [],
+      "rcranLibraries": []
+    },
+    "docker": {
+      "arguments": [],
+      "baseDockerfile": null,
+      "baseImage": "mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.1-cudnn7-ubuntu18.04:20200821.v1",
+      "baseImageRegistry": {
+        "address": null,
+        "password": null,
+        "registryIdentity": null,
+        "username": null
+      },
+      "enabled": false,
+      "platform": {
+        "architecture": "amd64",
+        "os": "Linux"
+      },
+      "sharedVolumes": true,
+      "shmSize": null
+    },
+    "environmentVariables": {
+      "EXAMPLE_ENV_VAR": "EXAMPLE_VALUE"
+    },
+    "inferencingStackVersion": null,
+    "name": "AzureML-TensorFlow-2.2-GPU",
+    "python": {
+      "baseCondaEnvironment": null,
+      "condaDependencies": {
+        "channels": [
+          "conda-forge"
+        ],
+        "dependencies": [
+          "python=3.6.2",
+          {
+            "pip": [
+              "azureml-core==1.13.0",
+              "azureml-defaults==1.13.0",
+              "azureml-telemetry==1.13.0",
+              "azureml-train-restclients-hyperdrive==1.13.0",
+              "azureml-train-core==1.13.0",
+              "tensorflow-gpu==2.2.0",
+              "horovod==0.19.1"
+            ]
+          }
+        ],
+        "name": "azureml_c58bf35e1b26936aac12c7976488df1f"
+      },
+      "condaDependenciesFile": null,
+      "interpreterPath": "python",
+      "userManagedDependencies": false
+    },
+    "r": null,
+    "spark": {
+      "packages": [],
+      "precachePackages": true,
+      "repositories": []
+    },
+    "version": "4"
+  }
 # History details.
 history:
 # Enable history tracking -- this allows status, logs, metrics, and outputs
@@ -52,30 +117,10 @@ paralleltask:
   workerCountPerNode: 1
 # Worker exit codes to terminate job.
   terminalExitCodes:
-# The configuration that describes how to make data available for the run.
 # data reference configuration details
 dataReferences: {}
-# The configuration details for data.
-data:
-  example:
-# Data Location
-    dataLocation:
-# the Dataset used for this run.
-      dataset:
-# Id of the dataset.
-        id: $datasetId
-# the DataPath used for this run.
-      datapath:
-# Whether to create new folder.
-    createOutputDirectories: false
-# The mode to handle
-    mechanism: mount
-# Point where the data is download or mount or upload.
-    environmentVariableName: mnist
-# relative path where the data is download or mount or upload.
-    pathOnCompute:
-# Whether to overwrite the data if existing.
-    overwrite: false
+# The configuration that describes how to make data available for the run.
+data: {}
 # The configuration that describes how to save and track outputs for the run
 outputData: {}
 # Project share datastore reference.
@@ -89,6 +134,6 @@ amlcompute:
 # A bool that indicates if the cluster has to be retained after job completion.
   retainCluster: false
 # Name of the cluster to be created. If not specified, runId will be used as cluster name.
-  name: 
+  name:
 # Maximum number of nodes in the AmlCompute cluster to be created. Minimum number of nodes will always be set to 0.
   clusterMaxNodeCount:

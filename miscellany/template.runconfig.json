@@ -1,0 +1,71 @@
+{
+    "script": "$scriptFile",
+    "scriptType": null,
+    "useAbsolutePath": false,
+    "arguments": [],
+    "sourceDirectoryDataStore": null,
+    "framework": "$framework",
+    "communicator": "Mpi",
+    "target": "$computeTargetName",
+    "dataReferences": {},
+    "data": {},
+    "outputData": {},
+    "jobName": null,
+    "maxRunDurationSeconds": null,
+    "nodeCount": 1,
+    "environment": {},
+    "history": {
+        "outputCollection": true,
+        "directoriesToWatch": [
+            "logs"
+        ],
+        "enableMLflowTracking": true,
+        "snapshotProject": true
+    },
+    "spark": {
+        "configuration": {
+            "spark.app.name": "Azure ML Experiment",
+            "spark.yarn.maxAppAttempts": "1"
+        }
+    },
+    "parallelTask": {
+        "maxRetriesPerWorker": 0,
+        "workerCountPerNode": 1,
+        "terminalExitCodes": null,
+        "configuration": {}
+    },
+    "amlCompute": {
+        "name": null,
+        "vmSize": null,
+        "retainCluster": false,
+        "clusterMaxNodeCount": null
+    },
+    "aiSuperComputer": {
+        "instanceType": null,
+        "frameworkImage": null,
+        "imageVersion": null,
+        "location": null
+    },
+    "tensorflow": {
+        "workerCount": 1,
+        "parameterServerCount": 1
+    },
+    "mpi": {
+        "processCountPerNode": 1
+    },
+    "hdi": {
+        "yarnDeployMode": "Cluster"
+    },
+    "containerInstance": {
+        "region": null,
+        "cpuCores": 2,
+        "memoryGb": 3.5
+    },
+    "exposedPorts": null,
+    "docker": {
+        "useDocker": true,
+        "sharedVolumes": true,
+        "shmSize": "2g",
+        "arguments": []
+    }
+}

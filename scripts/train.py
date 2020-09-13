@@ -7,9 +7,11 @@ from tensorflow.data import Dataset
 import os
 from azureml.core import Run
 
+print("{} : train.py example. Copied from scripts/train.py".format(os.getcwd()))
+
+
 azureMLRun = Run.get_context()
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-"train.py"
 azureMLRun.log("train.py", "")
 
 def get_mnist_dataset() -> ((ndarray, ndarray), (ndarray, ndarray)):

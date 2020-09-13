@@ -87,7 +87,7 @@ Create-AzMLResources-And-Submit-ForTraining.ps1
     [-environmentFor <StringMatching> | -environmentName <StringExactName>] 
     [-datasetName <StringName> | -datasetDefinitionFile <path> | -datasetId <StringGuid>]
     [-script <path>] 
-    [-attachFolder [ Yes | No | Ask ] ] 
+    [-attachFolder:$false] 
     [-submit] 
     [-noConfirm]
     [-pricingTier [Standard]]
@@ -166,8 +166,9 @@ Param(
   [string]$datasetId,
   ##The script file (and by implication, the script directory) to submit
   [string]$script='scripts/train.py',
-  ##Confirm attach the current folder to the workspace, which will help in generating a runconfig
-  [ValidateSet('Yes','No','Ask')][string]$attachFolder='Ask',
+  ##Confirm attach the current folder to the workspace.
+  ##A run submit will probably fail without this
+  [switch]$attachFolder=$true,
   ##Whether to submit the script. Otherwise, the generated command line will be shown.
   ##A submittable script requires resourceGroup, workspace, computetarget, experimentName, 
   ##an environment and a script
@@ -369,8 +370,7 @@ if($experimentName){"✅ OK"}else{
 $noMoreParametersSpecified=  `
   -not (($datasetDefinitionFile, $datasetName, $datasetId, $environmentName, $environmentFor, $submit) -ne "") `
   -and ($experimentName -eq (Split-Path (Get-Location) -Leaf)) `
-  -and ($script -eq "scripts/train.py") `
-  -and ($attachFolder -eq 'Ask') `
+  -and ($script -eq "scripts/train.py") 
 
 if($noMoreParametersSpecified){
 
@@ -379,7 +379,6 @@ if($noMoreParametersSpecified){
 
     -environmentName | -environmentFor
     [ -DatasetName | -datasetDefinitionFile | -DatasetId ]
-    [ -attachFolder ]
     [ -script='scripts/train.py' ]
     [ -submit ]
     [ -NoConfirm ]
@@ -391,62 +390,70 @@ if($noMoreParametersSpecified){
 5. Choose an Environment by name
 "
 if($environmentName){
-    $chosenEnvironmentName=$environmentName
-    az ml environment show  --name $environmentName -w $workspaceName -g $resourceGroupName --output table
-    if(-not $?){
-      write-warning "
-      You asked for environment $environmentName , but no such was found.
-      To choose an Azure curated environment, instead use 
-      -environmentFor TensorFlow | PyTorch | Tutorial | ... instead
-      which will find a matching curated Azure ML environment.
 
-      This script doesn't cover creating your own custom environment.
+  $matchesj=(az ml environment list -w $workspaceName  -g $resourceGroupName `
+              --query "[?name==`'$environmentName`')]") -join [Environment]::NewLine
+  $matches=ConvertFrom-Json $matchesj -NoEnumerate  -Depth 90
+  if(-not $matches.Length){
+    write-warning "
+    You asked for environment $environmentName , but no such was found.
+    To choose an Azure curated environment, instead use 
+    -environmentFor TensorFlow | PyTorch | Tutorial | ... instead
+    which will find a matching curated Azure ML environment.
 
-      Halted at 5. Choose an Environment, because your choice wasn't found.
-      "
-      exit
-    }
-  }elseif($environmentFor){
+    This script doesn't cover creating your own custom environment.
 
-    "5.1 Looking for an existing environment matching $environmentFor ...
-    "
-    $matchesj=(az ml environment list -w $workspaceName  -g $resourceGroupName `
-                --query "[?contains(name,`'$environmentFor`')].name") `
-                -match '".*"'
-
-    if(-not $matchesj -or ($matchesj.Length -eq 0)){
-      write-warning "
-      You asked for a curated environment matching $environmentFor , but no such was found.
-      Here are all known environments available to your workspace:
-      "
-      az ml environment list -w $workspaceName -g $resourceGroupName --output table
-      write-warning "
-      Halted at 5. Choose an Environment, because your choice $environmentFor wasn't 
-      found. (N.B. the match is case-sensitive).
-      "
-      exit
-    }else{
-      $matches=( $matchesj | %{ $_.Trim(" ,`"") })
-      $chosenEnvironmentName=($matches | Sort-Object -Descending)[0]
-      "Found:"
-      $matches
-      "6.2 Choosing $chosenEnvironmentName as the alphabetically last match."
-    }
-  }else{
-    "Available environments (these are just the GPU enabled ones):
-    "
-    az ml environment list -w $workspaceName  -g $resourceGroupName --output table --query "[?contains(name,'GPU')]"
-    "
-    Choose an environment either with 
-
-    -environmentName <existing-environment-name>
-
-    -environmentFor <string-to-search-in-environments-eg-Tensorflow>
-    "
-    write-warning "Halted at 5. Choose an Environment because you didn't specify either -environmentName or -environmentFor
+    Halted at 5. Choose an Environment, because your choice wasn't found.
     "
     exit
   }
+  $chosenEnvironment= $matches[0]
+
+}elseif($environmentFor){
+
+  "5.1 Looking for an existing environment matching $environmentFor ...
+  "
+  $matchesj=(az ml environment list -w $workspaceName  -g $resourceGroupName `
+              --query "[?contains(name,`'$environmentFor`')]") -join [Environment]::NewLine
+  $matches=ConvertFrom-Json $matchesj -NoEnumerate -Depth 90
+
+  if($matches.Length){
+
+    $chosenEnvironment= ($matches | Sort-Object -Property name -Descending | Select -First 1)
+    "Found:"
+    $matches | Select name
+    "6.2 Choosing $chosenEnvironment.name as the alphabetically last match."
+    $chosenEnvironment
+
+  }else{
+    write-warning "
+    You asked for a curated environment matching $environmentFor , but no such was found.
+    Here are all known environments available to your workspace:
+    "
+    az ml environment list -w $workspaceName -g $resourceGroupName --output table
+    write-warning "
+    Halted at 5. Choose an Environment, because your choice $environmentFor wasn't 
+    found. (N.B. the match is case-sensitive).
+    "
+    exit
+  }
+
+}else{
+  "Available environments (these are just the GPU enabled ones):
+  "
+  az ml environment list -w $workspaceName  -g $resourceGroupName --output table --query "[?contains(name,'GPU')]"
+  "
+  Choose an environment either with 
+
+  -environmentName <existing-environment-name>
+
+  -environmentFor <string-to-search-in-environments-eg-Tensorflow>
+  "
+  write-warning "Halted at 5. Choose an Environment because you didn't specify either -environmentName or -environmentFor
+  "
+  exit
+}
+
 "✅ OK"
 
 # ----------------------------------------------------------------------------
@@ -456,7 +463,7 @@ if($environmentName){
 "
   $existingDatasetsj= (az ml dataset list -g $resourceGroupName -w $workspaceName `
                         --query "[].{name:name, id:id}") -join [Environment]::NewLine
-  $existingDatasets= (ConvertFrom-Json $existingDatasetsj -NoEnumerate -AsHashtable)
+  $existingDatasets= (ConvertFrom-Json $existingDatasetsj -NoEnumerate)
 
 if($datasetName){
   $dataset= $existingDatasets | Where name -eq $datasetName | Select -First 1
@@ -603,39 +610,46 @@ if(test-path ".azureml/"){
   
 }elseif($attachFolder -eq 'No'){
   "Not attaching because you said so."
+  write-warning "
+  A CLI run submit from an unattached folder will probably fail because it
+  insists on looking for the path ./azureml/conda_dependencies.yml
+  "
 }elseif(-not $experimentName){
   "Not attaching because you must have an -experimentName to attach a folder, but you blanked it."
 }else{
-  if( $attachFolder -eq 'Yes' `
-      -or ( $attachFolder -eq 'Ask' `
-          -and (Ask-YesNo "Attach this directory, with experiment-name $($experimentName)?")) `
-    ){
     az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName
     if(-not $?){
       throw "failed at az ml folder attach -w $workspaceName -g $resourceGroupName --experiment-name $experimentName"
-    }
   }
 }
 "✅ OK"
 
 # ----------------------------------------------------------------------------
 "
-9. Deduce framework from Environment $chosenEnvironmentName
+9. Deduce framework and communicator from Environment $chosenEnvironment.name
 "
-switch -wildcard ($chosenEnvironmentName){
+switch -wildcard ($chosenEnvironment.name){
 
-  "*PySpark*"     { $framework = "PySpark"}
-  "*CNTK*"        { $framework = "CNTK"}
-  "*TensorFlow*"  { $framework = "TensorFlow"}
-  "*PyTorch*"     { $framework = "PyTorch"}
-  "Python"        { $framework = "Python"}
+  "*PySpark*"     { $framework = "PySpark" } 
+  "*CNTK*"        { $framework = "CNTK" }
+  "*TensorFlow*"  { $framework = "TensorFlow" }
+  "*PyTorch*"     { $framework = "PyTorch" }
+  "*Python*"        { $framework = "Python" }
   Default         { 
-          write-warning "You rchosen environment didn't match any of TensorFlow,PyTorch,PySpark,CNTK so setting framework to Python"
+          write-warning "Your chosen environment didn't match any of TensorFlow,PyTorch,PySpark,CNTK so setting framework to Python"
           $framework = "Python"
         }
 }
 
-"Set framework to $framework"
+switch -wildcard ($chosenEnvironment.docker.baseImage){
+  '*intelmpi*'        {$communicator='Mpi'}
+  '*openmpi*'         {$communicator='Mpi'}
+  '*ParameterServer*' {$communicator='ParameterServer'}
+  Default             {$communicator='None' ; write-warning "Didn't find a hint for communicator setting in the Environment basImage name"}
+}
+
+
+"Set framework to $framework and communicator to $communicator"
 "✅ OK"
 
 # ----------------------------------------------------------------------------
@@ -647,7 +661,7 @@ switch -wildcard ($chosenEnvironmentName){
    ResourceGroup  : $resourceGroupName 
    Workspace      : $workspaceName 
    ComputeTarget  : $computeTargetName 
-   Environment    : $chosenEnvironmentName
+   Environment    : $chosenEnvironment.name
    Script         : $($(if(test-path $script){"$script"}else{'(no)'}))
    DatasetId?     : $datasetId
    New Dataset?   : $(if($chosenDatasetFile){$chosenDatasetFile}else{'(no)'})
@@ -655,7 +669,11 @@ switch -wildcard ($chosenEnvironmentName){
    Local directory attached? : $(if(test-path ".azureml/"){'Yes'}else{'No'})
    "
 
-$runconfigPath= "$(if(test-path .azureml){'.azureml/'})$experimentName.runconfig"
+$configDir="$(if(test-path .azureml){'.azureml/'})"
+$runconfigPath="$configDir$computeTargetName.runconfig"
+
+#$condaymlPath="$($configDir)conda_dependencies.yml"
+#if(-not (Test-Path $condaymlPath)){ cp miscellany/conda_dependencies.yml $condaymlPath }
 
 if(test-path $runconfigPath){
   "
@@ -666,12 +684,12 @@ if(test-path $runconfigPath){
   }
 }
 
-if(-not $chosenEnvironmentName -or -not $experimentName -or -not $script){
+if(-not $chosenEnvironment.name -or -not $experimentName -or -not $script){
 
   "
   You must still specify:"
 
-  if(-not $chosenEnvironmentName){" -environmentMatch or -environmentName. e.g. -environmentMatch TensorFlow"}
+  if(-not $chosenEnvironment.name){" -environmentMatch or -environmentName. e.g. -environmentMatch TensorFlow"}
   if(-not $experimentName){" -experimentName. Defaults to current folder name."}
   if(-not $script){" -script e.g. scripts/train.py"}
   write-warning "Halting at step 9. Create a runconfig, because you have not specified everything needed to create one."
@@ -679,15 +697,18 @@ if(-not $chosenEnvironmentName -or -not $experimentName -or -not $script){
 
 }else{
 
-  $content= (Get-Content miscellany/example.runconfig) -join [Environment]::NewLine
-  $content= $content -replace '\$computeTargetName',"$computeTargetName"
+  $content= (Get-Content miscellany/template.runconfig.json) -join [Environment]::NewLine
   $content= $content -replace '\$scriptFile',"$scriptFile"
-  $content= $content -replace '\$chosenEnvironmentName',"$chosenEnvironmentName"
-  $content= $content -replace '\$datasetId',"$datasetId"
   $content= $content -replace '\$framework',"$framework"
+  $content= $content -replace '\$communicator',"$communicator"
+  $content= $content -replace '\$computeTargetName',"$computeTargetName"
+  $content= $content -replace '\$datasetId',"$datasetId"
+  $content= $content -replace '\$datasetName',"dataset-named-$datasetName"
+  $content= $content -replace '"environment": {},', "`"environment`": $(ConvertTo-Json $chosenEnvironment -Depth 90) ,"
+  #$content= $content -replace '"condaDependenciesFile": null',"`"condaDependenciesFile`": $condaymlPath"
+  #$content= $content -replace '\$condaymlPath',"$condaymlPath"
   
   Set-Content -Path $runconfigPath -Value $content
-
 }
 "✅ OK"
 

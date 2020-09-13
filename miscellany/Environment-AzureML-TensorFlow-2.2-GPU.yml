@@ -1,0 +1,65 @@
+{
+  "databricks": {
+    "eggLibraries": [],
+    "jarLibraries": [],
+    "mavenLibraries": [],
+    "pypiLibraries": [],
+    "rcranLibraries": []
+  },
+  "docker": {
+    "arguments": [],
+    "baseDockerfile": null,
+    "baseImage": "mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.1-cudnn7-ubuntu18.04:20200821.v1",
+    "baseImageRegistry": {
+      "address": null,
+      "password": null,
+      "registryIdentity": null,
+      "username": null
+    },
+    "enabled": false,
+    "platform": {
+      "architecture": "amd64",
+      "os": "Linux"
+    },
+    "sharedVolumes": true,
+    "shmSize": null
+  },
+  "environmentVariables": {
+    "EXAMPLE_ENV_VAR": "EXAMPLE_VALUE"
+  },
+  "inferencingStackVersion": null,
+  "name": "AzureML-TensorFlow-2.2-GPU",
+  "python": {
+    "baseCondaEnvironment": null,
+    "condaDependencies": {
+      "channels": [
+        "conda-forge"
+      ],
+      "dependencies": [
+        "python=3.6.2",
+        {
+          "pip": [
+            "azureml-core==1.13.0",
+            "azureml-defaults==1.13.0",
+            "azureml-telemetry==1.13.0",
+            "azureml-train-restclients-hyperdrive==1.13.0",
+            "azureml-train-core==1.13.0",
+            "tensorflow-gpu==2.2.0",
+            "horovod==0.19.1"
+          ]
+        }
+      ],
+      "name": "azureml_c58bf35e1b26936aac12c7976488df1f"
+    },
+    "condaDependenciesFile": null,
+    "interpreterPath": "python",
+    "userManagedDependencies": false
+  },
+  "r": null,
+  "spark": {
+    "packages": [],
+    "precachePackages": true,
+    "repositories": []
+  },
+  "version": "4"
+}
