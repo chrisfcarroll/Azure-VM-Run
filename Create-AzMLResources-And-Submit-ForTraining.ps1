@@ -461,25 +461,28 @@ if($environmentName){
 "
 6. Choose a Dataset $datasetName $datasetId or Create one from a file $datasetDefinitionFile
 "
-  $existingDatasetsj= (az ml dataset list -g $resourceGroupName -w $workspaceName `
-                        --query "[].{name:name, id:id}") -join [Environment]::NewLine
-  $existingDatasets= (ConvertFrom-Json $existingDatasetsj -NoEnumerate)
+
+$runconfigDataJsonFragment='{}'
+$existingDatasetsj= (az ml dataset list -g $resourceGroupName -w $workspaceName `
+                      --query "[].{name:name, id:id}") -join [Environment]::NewLine
+$existingDatasets= (ConvertFrom-Json $existingDatasetsj -NoEnumerate)
 
 if($datasetName){
   $dataset= $existingDatasets | Where name -eq $datasetName | Select -First 1
   if(-not $dataset){
     "You specified datasetName $datasetName but no dataset was found in workspace $workspace name.
     Existing datasets:"
-    az ml dataset list -g $resourceGroupName -w $workspaceName
+    $existingDatasets | Select name,id
     "
-    If you specify no dataset, this script will offer to create an example using the mnist dataset.
+    If instead you specify no dataset, this script will offer to create an example using the mnist dataset.
     "
     write-warning "
     Halting at step 6. Choose a Dataset because you chose a name for which no dataset exists.
     "
-  }else{
-    $datasetId=$dataset.id
+    exit
   }
+  $datasetId=$dataset.id
+  $datasetName=$dataset.name
   $chosenDatasetFile=$null
 }
 
@@ -538,11 +541,45 @@ if($chosenDatasetFile){
   }
 }
 
-if($datasetId){
-   "Using datasetId $datasetId"
+if($datasetId -and $datasetName){
+   "Using dataset: name=$datasetName , id=$datasetId"
+
+data:
+  example:
+    dataLocation:
+      dataset:
+        id: $datasetId
+      datapath:
+    createOutputDirectories: false
+    mechanism: mount
+    environmentVariableName: mnist
+    pathOnCompute:
+    overwrite: false
+
+
+
+
+   $runconfigDataJsonFragment='{
+      "dataset-named-$datasetName":{
+        "dataLocation":{
+          "dataset":{
+            "id": "$datasetId",
+            },
+          "datapath":null,
+        "createOutputDirectories": false,
+        "mechanism": "mount",
+        "environmentVariableName": "$datasetName",
+        "pathOnCompute":null,
+        "overwrite": false
+        }
+      }
+    }' -replace '\$datasetId', "$datasetId" -replace '\$datasetName', "$datasetName" 
+
+    $runconfigDataJsonFragment
+
 }elseif(-not $chosenDatasetFile -and $existingDatasets.Length){
   "
-  Note you have these datasets already defined in your workspace
+  NB you have these datasets already defined in your workspace
   "
   $existingDatasets | %{ "name: $($_.name) , id: $($_.id)" } 
 }else{
@@ -559,9 +596,6 @@ if($datasetId){
 if($script -and (test-path $script)){
   "Found $script"
   $askScript=$null
-  if( (Split-Path $script -Leaf) -ne 'train.py'){
-    write-warning "You probably have to use train.py as your scripts' entry point filename."
-  }
 }elseif(-not $script){
   $askScript="
   You did not specify a script to run.
@@ -612,7 +646,7 @@ if(test-path ".azureml/"){
   "Not attaching because you said so."
   write-warning "
   A CLI run submit from an unattached folder will probably fail because it
-  insists on looking for the path ./azureml/conda_dependencies.yml
+  insists on looking for the nonexistent file ./azureml/conda_dependencies.yml
   "
 }elseif(-not $experimentName){
   "Not attaching because you must have an -experimentName to attach a folder, but you blanked it."
@@ -672,9 +706,6 @@ switch -wildcard ($chosenEnvironment.docker.baseImage){
 $configDir="$(if(test-path .azureml){'.azureml/'})"
 $runconfigPath="$configDir$computeTargetName.runconfig"
 
-#$condaymlPath="$($configDir)conda_dependencies.yml"
-#if(-not (Test-Path $condaymlPath)){ cp miscellany/conda_dependencies.yml $condaymlPath }
-
 if(test-path $runconfigPath){
   "
   runconfig file $runconfigPath already exists.
@@ -702,12 +733,9 @@ if(-not $chosenEnvironment.name -or -not $experimentName -or -not $script){
   $content= $content -replace '\$framework',"$framework"
   $content= $content -replace '\$communicator',"$communicator"
   $content= $content -replace '\$computeTargetName',"$computeTargetName"
-  $content= $content -replace '\$datasetId',"$datasetId"
-  $content= $content -replace '\$datasetName',"dataset-named-$datasetName"
+  $content= $content -replace '"data": {}',"`"data`": $runconfigDataJsonFragment"
   $content= $content -replace '"environment": {},', "`"environment`": $(ConvertTo-Json $chosenEnvironment -Depth 90) ,"
-  #$content= $content -replace '"condaDependenciesFile": null',"`"condaDependenciesFile`": $condaymlPath"
-  #$content= $content -replace '\$condaymlPath',"$condaymlPath"
-  
+
   Set-Content -Path $runconfigPath -Value $content
 }
 "✅ OK"
