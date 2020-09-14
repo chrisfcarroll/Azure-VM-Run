@@ -4,6 +4,22 @@
 		"selected_items":
 		[
 			[
+				"datas",
+				"datasetName"
+			],
+			[
+				"run",
+				"runconfigDataJsonFragment"
+			],
+			[
+				"dataset",
+				"datasetName"
+			],
+			[
+				"data",
+				"datasetName"
+			],
+			[
 				"mat",
 				"matches"
 			],
@@ -152,10 +168,6 @@
 				"NewLine"
 			],
 			[
-				"data",
-				"datasetDefinitionFile"
-			],
-			[
 				"env",
 				"Environment"
 			],
@@ -202,10 +214,6 @@
 			[
 				"en",
 				"environmentName"
-			],
-			[
-				"datas",
-				"datasetId"
 			],
 			[
 				"resou",
@@ -440,30 +448,36 @@
 	"expanded_folders":
 	[
 		"/Users/chris/Source/Repos/AzureMLSetup",
-		"/Users/chris/Source/Repos/AzureMLSetup/.azureml",
-		"/Users/chris/Source/Repos/AzureMLSetup/miscellany"
+		"/Users/chris/Source/Repos/AzureMLSetup/scripts"
 	],
 	"file_history":
 	[
-		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/ml1",
-		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/example.runconfig.json",
-		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/conda_dependencies.yml",
-		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/example.runconfig",
-		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/ml1.runconfig",
-		"/Users/chris/Source/Repos/AzureMLSetup/ml1.runconfig",
 		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzMLResources-And-Submit-ForTraining.ps1",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/ml1.runconfig",
+		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/successful-complete-example.runconfig",
+		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/template.runconfig.json",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/docker",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/local",
+		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/example.runconfig",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/ml1",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/config.json",
+		"/Users/chris/Source/Repos/AzureMLSetup/scripts/example-tensorflow-train-mnist.py",
+		"/Users/chris/Source/Repos/AzureMLSetup/scripts/example-no-framework.py",
+		"/Users/chris/Source/Repos/AzureMLSetup/scripts/train.py",
+		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/successful",
+		"/Users/chris/Source/Repos/AzureMLSetup/.git/COMMIT_EDITMSG",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/successfull",
+		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/conda_dependencies.yml",
+		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/example.runconfig.json",
+		"/Users/chris/Source/Repos/AzureMLSetup/ml1.runconfig",
 		"/Users/chris/Source/Repos/AzureMLSetup/conda_dependencies.yml",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/Environment-AzureML-TensorFlow-2.2-GPU.yml",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/conda_dependencies.yml",
 		"/Users/chris/Source/Repos/AzureMLSetup/.gitignore",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/generate-runconfig.py",
-		"/Users/chris/Source/Repos/AzureMLSetup/scripts/train.py",
-		"/Users/chris/Source/Repos/AzureMLSetup/scripts/example-tensorflow-train-mnist.py",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/Environment-AzureML-TensorFlow-2.2-GPU.runconfig",
 		"/Users/chris/Source/Repos/AzureMLSetup/Create-AzVM-ForDataSciencePython.ps1",
 		"/Users/chris/Source/Repos/AzureMLSetup/dataset-Example.json",
-		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/docker",
-		"/Users/chris/Source/Repos/AzureMLSetup/.azureml/local",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/Az Queries with JMESPath Examples.md",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/All VM images MS Data Science 2020 September.json",
 		"/Users/chris/Source/Repos/AzureMLSetup/Ensure-AzMLResources-And-Submit-ForTraining.ps1",
@@ -472,7 +486,6 @@
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/ALL VMs with GPU uksouth 2020 September.json",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/JMESPath Examples for Querying az.md",
 		"/Users/chris/Source/Repos/AzureMLSetup/miscellany/All ML Environments Full Details uksouth 2020-September.json",
-		"/Users/chris/Source/Repos/AzureMLSetup/.git/COMMIT_EDITMSG",
 		"/Users/chris/Source/Repos/AzureMLSetup/README.md",
 		"/Users/chris/Source/Repos/AzureMLSetup/azure-ml-setup.ps1",
 		"/Users/chris/Source/Repos/MLOps/examples/cli-train-deploy/train-model.sh",
@@ -566,13 +579,7 @@
 		"/var/folders/2g/vfmd35sn3qs5h8rnfcxtwhk00000gn/T/chsh.EY5L86",
 		"/Users/chris/OneDrive/My Notes/BStudy Notes/Gen 17.txt",
 		"/Users/chris/.config/Genie9/Zoolz/Jobs/{6E820F39-1F0F-4C22-A9F6-5E7CAE6F6FA7}/Rules.xml",
-		"/Applications/Utilities/XQuartz.app/Contents/MacOS/X11",
-		"/Users/chris/Documents/Church/Service/OoS.txt",
-		"/Users/chris/Source/Scratch/TFLearning/TF2xTutorials/01-TF2.0-Overview/mnistConvModel/export/saved_model.pb",
-		"/Users/chris/Source/Scratch/TFLearning/TF2xTutorials/01-TF2.0-Overview/.gitignore",
-		"/Volumes/Astute/Production Support Access.txt",
-		"/Volumes/User/Desktop/welcome.txt",
-		"/usr/local/bin/pip3"
+		"/Applications/Utilities/XQuartz.app/Contents/MacOS/X11"
 	],
 	"find":
 	{
@@ -591,6 +598,19 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"data:",
+			"frag",
+			"example scr",
+			"train.py",
+			"runconfigDataJsonFragment",
+			"conda",
+			"$experimentName.runconfig",
+			"ml1",
+			"data",
+			"attachFolder",
+			"\n  ",
+			"Ask",
+			"docker",
 			"environment",
 			"chosenEnvironmentName",
 			"$vm",
@@ -621,6 +641,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"$computeTargetName.runconfig",
 			"chosenEnvironment.name",
 			"$vmIp",
 			"runconfigPath",
@@ -718,7 +739,7 @@
 	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 293.0,
+	"side_bar_width": 283.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

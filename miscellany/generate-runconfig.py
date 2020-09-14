@@ -17,7 +17,7 @@ conda_env.python.conda_dependencies = CondaDependencies.create(
     ])
 
 # Get the dataset that will be used
-dataset = Dataset.get_by_name(ws, 'mnist-dataset')
+dataset = Dataset.get_by_name(ws, 'mnist')
 # Define the environment variable/where data will be mounted
 input_name = 'mnist'
 # Define the name of the compute target for training
