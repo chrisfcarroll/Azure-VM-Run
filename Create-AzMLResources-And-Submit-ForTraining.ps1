@@ -687,7 +687,9 @@ switch -wildcard ($chosenEnvironment.docker.baseImage){
    ResourceGroup  : $resourceGroupName 
    Workspace      : $workspaceName 
    ComputeTarget  : $computeTargetName 
-   Environment    : $chosenEnvironment.name
+   Environment    : $($chosenEnvironment.name)
+                    $($chosenEnvironment.docker.baseImage)
+                    $($chosenEnvironment.python.dependencies)
    Script         : $($(if(test-path $script){"$script"}else{'(no)'}))
    DatasetId?     : $datasetId
    New Dataset?   : $(if($chosenDatasetFile){$chosenDatasetFile}else{'(no)'})

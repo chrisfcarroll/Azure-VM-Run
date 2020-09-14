@@ -16,9 +16,13 @@ comment="""Output from an ML run
   """
 azureMLRun = Run.get_context()
 azureMLRun.log("Log","Successfully ran script and logged to azureml.core.Run.get_context().log(...)")
-azureMLRun.log("More log", "use azureml.core.Run.get_context().log("string", item):")
+azureMLRun.log("More log", "use azureml.core.Run.get_context().log('string', item):")
 azureMLRun.log("And more","Files saved to the outputs/ directory stays available after the run.")
 azureMLRun.log("And finally",comment)
+
+if not os.path.exists('outputs'):
+  azureMLRun.log("os.path","output directory outputs/ did not exist. Creating it in " + os.getcwd() )
+  os.makedirs('outputs')
 
 output=open('outputs/example-output.txt', 'w')
 output.write(comment)
