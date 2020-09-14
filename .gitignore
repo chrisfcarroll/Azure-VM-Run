@@ -5,3 +5,4 @@ dataset-Example.json
 ml1.runconfig
 runoutput*.json
 outputs/
+**/*.sublime-workspace
