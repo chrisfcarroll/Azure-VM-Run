@@ -4,7 +4,7 @@
 
 <#
 .Synopsis
-Create-AzMLResources-And-Submit-ForTraining.ps1 can perform one or all of:
+Create-AzMLResources-And-Submit.ps1 can perform one or all of:
   -create the nested sequence of Azure resources needed to run a script on an Azure ML computetarget 
   -create a runconfig file for the script and the resources
   -submit the run
@@ -59,11 +59,15 @@ when idle.
 
 4. Choose an Experiment name (Defaults to current folder name)
 
-5. Choose an Environment (e.g. TensorFlow, PyTorch, Scikit)
+5. Choose an Environment. Azure curated environments exist for 
+   e.g. TensorFlow, PyTorch, Scikit and others
+   An environment is typically a reference to a docker image
+   with python libraries installed. 
 
-6. Define a Dataset (Offers to create an example from the mnist dataset)
+6. Optionally choose or register a Dataset
+   The script offers to create an example mnist dataset.
 
-7. Choose a python script to run (Defaults to scripts/train.py)
+7. Choose a python script to run (Defaults to ./train.py)
 
 8. Attach a local folder on your desktop to the workspace
 
@@ -73,20 +77,20 @@ when idle.
 
 --------------------------------------------------------------------------
 Not covered by this script:
-- Attach an Azure blob container as a Datastore for large datasets and upload files
-- Scaffolding your own new Environment
+- Attach an Azure blob container as a Datastore for large datasets and uploads
+- Creating your own new Environment
 ----------------------------------------------------------------------------
 
 Usage:
 
-Create-AzMLResources-And-Submit-ForTraining.ps1 
-    [[-resourceGroupName] <StringName> [-location <StringAzureLocation>]] 
-    [[-workspaceName] <StringName>] 
-    [[-computeTargetName] <StringName> [-computeTargetSize <StringvmSize>]] 
-    [[-experimentName] <String>] 
-    [-environmentFor <StringMatching> | -environmentName <StringExactName>] 
-    [-datasetName <StringName> | -datasetDefinitionFile <path> | -datasetId <StringGuid>]
-    [-script <path>] 
+Create-AzMLResources-And-Submit.ps1 
+    [-resourceGroupName] <StringName> [-location <StringAzureLocationId>]
+    [-workspaceName] <StringName>
+    [-computeTargetName] <StringName> [-computeTargetSize <StringvmSize>] [-pricingTier <String>]
+    [[-experimentName] <StringName> ]
+    [-environmentFor <StringMatchingName> | -environmentName <StringExactExistingName>] 
+    [-datasetDefinitionFile <path> | -datasetName <StringExactExistingName> | -datasetId <StringExactExistingGuid> ]
+    [-script <path>]
     [-attachFolder:$false] 
     [-submit] 
     [-noConfirm]
@@ -95,35 +99,34 @@ Create-AzMLResources-And-Submit-ForTraining.ps1
     [<CommonParameters>]    
 
 .Example
-Create-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -location uksouth
+Create-AzMLResources-And-Submit.ps1 ml1 ws1 ct1 -location uksouth
 
 -creates or confirms a resourceGroup named ml1 in Azure location uksouth,
--creates or confirms a workspace named ml1 in that resourceGroup
--creates or confirms a computetarget ml1 of default size (nc6) in the workspace
+-creates or confirms a workspace named ws1 in that resourceGroup
+-creates or confirms a computetarget ct1 of default size (nc6) in the workspace
 -tells you that your experimentName defaults to <current directory>
 -lists available Environments 
--then halts telling you to specify an environment.
+-finally, halts telling you to specify an environment.
 
 .Example
-Create-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 -environmentFor Tensorflow
+Create-AzMLResources-And-Submit.ps1 ml1 ws1 ct1 experiment1 -environmentFor TensorFlow
 
 -confirms a resourceGroup named ml1 exists in your current default location
--confirms or creates a workspace named ml1 in that resourceGroup
--confirms or creates a computetarget ml1 of default size (nc6) in the workspace
+-confirms or creates a workspace named ws1 in that resourceGroup
+-confirms or creates a computetarget ct1 of default size (nc6) in the workspace
 -looks for the alphabetically last environment with 'TensorFlow' in the name
 -offers to create a new example datasetDefinitionFile
--asks you whether to attach your folder to the workspace
--looks for a script at the default path scripts/train.py
+-attaches your folder to the workspace with experiment name experiment1
+-looks for a script at the default path train.py
 -if a script is found:
   -offers to create a runconfig file
   -shows you the command line to copy to submit a training run
   
 .Example
-Create-AzMLResources-And-Submit-ForTraining.ps1 ml1 ml1 ml1 ml1 `
+Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1 `
         -environmentFor TensorFlow `
-        -datasetName mnist-dataset `
+        -datasetName mnist `
         -script ./scripts/train.py `
-        -attachFolder Yes `
         -submit `
         -NoConfirm
 
@@ -137,53 +140,79 @@ Will do these steps:
   -confirms a script at the given path scripts/train.py
   -creates a runconfig file, unless one of the same name exists
   -submits the training run
+Submitting the run will by default stay attached in order to stream the logs to
+your console. You can Ctrl-C to stop them, and instead get results later
+either via https://ml.azure.com or with `az ml run list`
 
 #>
 [CmdletBinding(PositionalBinding=$false)]
 Param(
-  ##Required for step 2 and further. A new or existing Azure ResourceGroup name.
+  ##Required. A new or existing Azure ResourceGroup name.
   ##https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal
   [Parameter(Position=0)][Alias('g')][string]$resourceGroupName, 
-  ##Required for step 3 and further. A new or existing workspace, which will hold references to 
-  ##your data and computetargets
+
+  ##An Azure region name. Only required when creating a new ResourceGroup at step 2. 
+  ##Thereafter the ResourceGroup is all the location you need.
+  [string]$location,
+
+  ##Required for step 2 and further. A new or existing workspace, which will
+  ##hold references to your data and computetargets
   [Parameter(Position=1)][Alias('w')][string]$workspaceName,
-  ##UA new or existing Azure computetarget to run on. This will scale from 0 to 1 and back to 0 nodes when used
+
+  ##Required for step 3 and further. A new or existing Azure computetarget
+  ##to run on. If new, it will be created as a cluster scaling from 0 to 1
+  ##and back to 0 nodes when used
   [Parameter(Position=2)][string]$computeTargetName,
-  ##Required to create a runconfig, but defaults to current directory name
+
+  ##Only required when creating a new computetarget. The pre-selected options are vms with a GPU
+  ##The Promo sizes may not be available for computetargets
+  [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4')]
+    [string]$computeTargetSize='nc6',
+  ##Azure pricing tier is combined with computeTargetSize when specifying a new computetarget
+  [ValidateSet('Free', 'Shared', 'Basic', 'Standard', 'Premium', 'Isolated')][string]$pricingTier="Standard",
+
+  ##Used to attach the local folder and to create a runconfig.
+  ##Defaults to current directory name
   [Parameter(Position=3)][string]$experimentName= (Split-Path (Get-Location) -Leaf),
-  ##Usable for step 7. Using this will pick the alphabetically last matching environment,
-  ##which will typically be the one with the highest version number
+
+  ##A search string to choose a (usually Python) environment. The alphabetically
+  ##last matching environment name amongst existing environments will be chosen,
+  ##which will tyically be the most recent version, preferring GPU to CPU.
+  ##e.g. 'TensorFlow' will result in selecting 'TensorFlow-2.2-GPU' 
+  ##if that is the last matching TensorFlow environment.
   [ValidateSet('TensorFlow','PyTorch','Scikit','PySpark','CNTK','Minimal','AzureML-Tutorial','TensorFlow-2','TensorFlow-1','PyTorch-1.6')]
     [string]$environmentFor,
-  ##Usable for step 7 when you know the exact environmentName you require.
+
+  ##An exact, existing, environment name. 
+  ##An Environment is typically a reference to a docker image setup with python libraries
   ##See https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments for Azure-curated environments
   [string]$environmentName,
+
   ##Name of an existing Dataset to use
   [string]$datasetName,
+
   ##Name of a file to create a new dataset
   [ValidateScript({Test-Path $_ -PathType 'Leaf'})][string]$datasetDefinitionFile,
+
   ##Id of an existing Dataset to use
   [string]$datasetId,
-  ##The script file (and by implication, the script directory) to submit. Defaults to train.py in the current directory
+
+  ##The script file (and by implication, the script directory) to submit.
+  #Defaults to train.py in the current directory
   [string]$script='train.py',
+
   ##Confirm attach the current folder to the workspace.
   ##A run submit will probably fail without this
   [switch]$attachFolder=$true,
+
   ##Whether to submit the script. Otherwise, the generated command line will be shown.
   ##A submittable script requires resourceGroup, workspace, computetarget, experimentName, 
   ##an environment and a script
   [switch]$submit,
+
   ##Whether to answer yes to all confirmation questions
   [Alias('YesToAll')][switch]$noConfirm,
-  ##An Azure region name. Only required when creating a new ResourceGroup at step 2. 
-  ##Thereafter the ResourceGroup is all the location you need.
-  [string]$location,
-  ##Only required when creating a new computetarget at step 4. The pre-selected options are the ones with a GPU
-  [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4')]
-    [string]$computeTargetSize='nc6',
 
-  ##Azure pricing tier is combined with computeTargetSize when specifying a new computetarget
-  [ValidateSet('Free', 'Shared', 'Basic', 'Standard', 'Premium', 'Isolated')][string]$pricingTier="Standard",
   ##show this help text
   [switch]$help
 )
@@ -237,9 +266,14 @@ if($?){
 "
 if($resourceGroupName ){
   "Looking for existing resource group called $resourceGroupName ..."
-  az group show --output table --name $resourceGroupName
-  if($?){
-    "✅ OK"    
+  $matchesj=(az group show --name $resourceGroupName) -join [Environment]::NewLine
+  if($matchesj){
+    $matches=ConvertFrom-Json $matchesj
+    if($location -and ($location -ne $matches.location)){
+      write-warning "You thought resourceGroup $resourceGroupName was in $location but it's in $($matches.location) so that's what we'll use."
+    }
+    $location= $matches.location
+    "✅ OK"
   }elseif($location){
       "... none found.
 
@@ -370,7 +404,7 @@ if($experimentName){"✅ OK"}else{
 $noMoreParametersSpecified=  `
   -not (($datasetDefinitionFile, $datasetName, $datasetId, $environmentName, $environmentFor, $submit) -ne "") `
   -and ($experimentName -eq (Split-Path (Get-Location) -Leaf)) `
-  -and ($script -eq "scripts/train.py") 
+  -and ($script -eq "train.py") 
 
 if($noMoreParametersSpecified){
 
@@ -379,7 +413,7 @@ if($noMoreParametersSpecified){
 
     -environmentName | -environmentFor
     [ -DatasetName | -datasetDefinitionFile | -DatasetId ]
-    [ -script='scripts/train.py' ]
+    [ -script='train.py' ]
     [ -submit ]
     [ -NoConfirm ]
     "
@@ -598,8 +632,8 @@ if($askScript){
       "Scikit" { "example-scikit-train-mnist.py" ; break}
       default { "example-no-framework.py" }
     })
-    $script= "scripts/train.py"
-    New-Item scripts -ErrorAction SilentlyContinue
+    $script= if($script){$script}else{"train.py"}
+    New-Item $script -ErrorAction SilentlyContinue
     Copy-Item miscellany/$exampleScript $script
     Get-Content $script
   }else{
@@ -609,6 +643,7 @@ if($askScript){
 }
 $scriptFile=(Split-Path $script -Leaf)
 $scriptDir=(Split-Path $script -Parent)
+if(-not $scriptDir){$scriptDir="."}
 
 "✅ OK"
 # ----------------------------------------------------------------------------
@@ -687,13 +722,13 @@ switch -wildcard ($chosenEnvironment.docker.baseImage){
    ResourceGroup  : $resourceGroupName 
    Workspace      : $workspaceName 
    ComputeTarget  : $computeTargetName 
+   Experiment Name: $experimentName
    Environment    : $($chosenEnvironment.name)
                     $($chosenEnvironment.docker.baseImage)
-                    $($chosenEnvironment.python.dependencies)
+                    $($chosenEnvironment.python.condaDependencies.dependencies)
    Script         : $($(if(test-path $script){"$script"}else{'(no)'}))
-   DatasetId?     : $datasetId
+   Dataset?       : $datasetName $datasetId
    New Dataset?   : $(if($chosenDatasetFile){$chosenDatasetFile}else{'(no)'})
-   Experiment Name: $experimentName
    Local directory attached? : $(if(test-path ".azureml/"){'Yes'}else{'No'})
    "
 
@@ -725,7 +760,7 @@ if(-not $chosenEnvironment.name -or -not $experimentName -or -not $script){
 
   if(-not $chosenEnvironment.name){" -environmentMatch or -environmentName. e.g. -environmentMatch TensorFlow"}
   if(-not $experimentName){" -experimentName. Defaults to current folder name."}
-  if(-not $script){" -script e.g. scripts/train.py"}
+  if(-not $script){" -script e.g. train.py"}
   write-warning "Halting at step 9. Create a runconfig, because you have not specified everything needed to create one."
   exit
 
