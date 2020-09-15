@@ -19,9 +19,9 @@ print("Where does print output go?")
 print(comment)
 
 azureMLRun = Run.get_context()
-azureMLRun.log("Logging Started","This was the first logged message")
-azureMLRun.log("How To Log", "use azureml.core.Run.get_context().log('log header', item):")
-azureMLRun.log("How To Output","Files saved to the outputs/ directory stays available after the run.")
+azureMLRun.log("How To Log Metrics","This was the first logged message")
+azureMLRun.log("How To Log Metrics", "use azureml.core.Run.get_context().log('MetricName', value)")
+azureMLRun.log("How To Log Metrics","Files saved to the outputs/ directory stay available after the run.")
 
 
 if not os.path.exists('outputs'):

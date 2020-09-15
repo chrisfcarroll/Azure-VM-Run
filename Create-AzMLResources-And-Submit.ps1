@@ -638,7 +638,7 @@ if($script -and (test-path $script)){
 if($askScript){
   $askScript
   if(Ask-YesNo){
-    $script= $(switch -regex ($environmentName){
+    $script= $(switch -regex ($chosenEnvironment){
       "TensorFlow" { "example-train-mnist-tensorflow.py" ; break}
       "PyTorch" { "example-train-mnist-pytorch.py" ; break}
       "Scikit" { "example-train-mnist-scikit.py" ; break}
@@ -743,7 +743,7 @@ switch -wildcard ($chosenEnvironment.docker.baseImage){
    "
 
 $configDir="$(if(test-path .azureml){'.azureml/'})"
-$runconfigName="$experimentName-$computeTargetName"
+$runconfigName="$experimentName-$chosenEnvironment-$computeTargetName"
 $runconfigPath="$configDir$runconfigName.runconfig"
 
 if(test-path $runconfigPath){
