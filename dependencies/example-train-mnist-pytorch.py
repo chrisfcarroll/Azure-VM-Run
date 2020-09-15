@@ -11,6 +11,12 @@ from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 from azureml.core import Run
 
+azureMLRun = Run.get_context()
+azureMLRun.log("Logging Started","This was the first logged message")
+azureMLRun.log("How To Log", "use azureml.core.Run.get_context().log('log header', item):")
+azureMLRun.log("How To Output","Files saved to the outputs/ directory stays available after the run.")
+
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -67,10 +73,13 @@ def test(model, device, test_loader):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
+    test_accuracy= 100. * correct / len(test_loader.dataset)
 
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+        test_accuracy))
+    azureMLRun.log("Test Set Average Loss", test_loss)
+    azureMLRun.log("Test Set Accuracy", test_accuracy)
 
 
 def main():
@@ -132,9 +141,7 @@ def main():
 
     if args.save_model:
         torch.save(model.state_dict(), "outputs/mnist_cnn.pt")
-
-    azureMLRun = Run.get_context()
-    azureMLRun.log('use azureml.core.Run.get_context().log("string", item):', "item")
+        azureMLRun.log("Model saved to","outputs/mnist_cnn.pt")
 
 
 if __name__ == '__main__':

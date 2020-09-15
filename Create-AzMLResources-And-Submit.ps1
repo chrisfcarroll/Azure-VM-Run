@@ -198,8 +198,8 @@ Param(
   [string]$datasetId,
 
   ##The script file (and by implication, the script directory) to submit.
-  #Defaults to train.py in the current directory
-  [string]$script='train.py',
+  #If left blank you will be offered an example script for your chosen environment
+  [string]$script,
 
   ##Confirm attach the current folder to the workspace.
   ##A run submit will probably fail without this
@@ -259,6 +259,19 @@ if($?){
   Start-Process "https://www.bing.com/search?q=az+cli+install+extension+ml+failed"
   throw "Failed when adding extension azure-cli-ml. Not sure where to go from here."
 }
+
+"Continuing with
+   ResourceGroup    : $resourceGroupName $(if($location){"[ location $location ]"})
+   Workspace        : $workspaceName 
+   ComputeTarget    : $computeTargetName  $(if($computeTargetSize){"[ $pricingTier $computeTargetSize ]"}) 
+   Experiment Name  : $experimentName
+   Environment?     : $( ($environmentName, $environmentFor) -ne '')
+   Dataset?         : $( ($datasetName, $datasetId, $datasetDefinitionFile) -ne '')
+   Script?          : $script
+   submit? $(if($submit){'Yes'}else{'No'})
+   $(if(-not $attachFolder -and -not (test-path ./azureml)){'[Don''t attach local folder]'})
+   $(if($noConfirm){'[NoConfirm : Create example resources as needed without further confirmation]'})
+   "
 
 # ----------------------------------------------------------------------------
 "
@@ -399,12 +412,11 @@ if($experimentName){"✅ OK"}else{
 
 # ----------------------------------------------------------------------------
 #
-# Stop here unless something more has been specified
+# Could stop here unless something more has been specified
 
 $noMoreParametersSpecified=  `
-  -not (($datasetDefinitionFile, $datasetName, $datasetId, $environmentName, $environmentFor, $submit) -ne "") `
+  (($datasetDefinitionFile, $datasetName, $datasetId, $environmentName, $environmentFor, $script) -eq "") `
   -and ($experimentName -eq (Split-Path (Get-Location) -Leaf)) `
-  -and ($script -eq "train.py") 
 
 if($noMoreParametersSpecified){
 
@@ -626,15 +638,13 @@ if($script -and (test-path $script)){
 if($askScript){
   $askScript
   if(Ask-YesNo){
-    $exampleScript= $(switch -regex ($environmentName){
-      "TensorFlow" { "tensorflow-train-mnist-example.py" ; break}
-      "PyTorch" { "pytorch-train-mnist-example.py" ; break}
-      "Scikit" { "scikit-train-mnist-example.py" ; break}
-      default { "no-framework-ping-log-and-output.py" }
+    $script= $(switch -regex ($environmentName){
+      "TensorFlow" { "example-train-mnist-tensorflow.py" ; break}
+      "PyTorch" { "example-train-mnist-pytorch.py" ; break}
+      "Scikit" { "example-train-mnist-scikit.py" ; break}
+      default { "example-training-output-and-log.py" }
     })
-    $script= if($script){$script}else{"train.py"}
-    New-Item $script -ErrorAction SilentlyContinue
-    Copy-Item dependencies/$exampleScript $script
+    Copy-Item dependencies/$script $script
     Get-Content $script
   }else{
     write-warning "Halted at 7. Choose a script file because you didn't specify one and didn't want an example one"

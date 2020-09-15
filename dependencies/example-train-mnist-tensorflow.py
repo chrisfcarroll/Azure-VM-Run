@@ -7,6 +7,13 @@ from tensorflow.data import Dataset
 import os
 from azureml.core import Run
 
+azureMLRun = Run.get_context()
+azureMLRun.log("Logging Started","This was the first logged message")
+azureMLRun.log("How To Log", "use azureml.core.Run.get_context().log('log header', item):")
+azureMLRun.log("How To Output","Files saved to the outputs/ directory stays available after the run.")
+os.makedirs('outputs', exist_ok=True)
+
+
 def get_mnist_dataset() -> ((ndarray, ndarray), (ndarray, ndarray)):
     xtrain:ndarray;ytrain:ndarray;xval:ndarray;yval:ndarray
 
@@ -48,11 +55,12 @@ model.fit(train_ds.repeat(), epochs=3, steps_per_epoch=500,
           validation_data=val_ds.repeat(),
           validation_steps=2)
 
-keras.models.save_model(model,'outputs/mnist-dense4layer-after30x500steps')
+model_save_dir='outputs/mnist-dense4layer-after30x500steps'
+keras.models.save_model(model, model_save_dir)
+azureMLRun.log('model saved to ', model_save_dir)
+
 
 (v_loss,v_accuracy)=model.evaluate(val_ds)
-azuremlRun.log("Logging", 'Use azuremlRun.log("Header", "Detail") to log anything')
-azureMLRun.log('test (loss,accuracy):', (v_loss,v_accuracy))
 azureMLRun.log('test loss:', v_loss)
 azureMLRun.log('test accuracy:', v_accuracy)
 

@@ -13,6 +13,12 @@ from sklearn.externals import joblib
 from azureml.core import Run
 from utils import load_data
 
+
+azureMLRun = Run.get_context()
+azureMLRun.log("Logging Started","This was the first logged message")
+azureMLRun.log("How To Log", "use azureml.core.Run.get_context().log('log header', item):")
+azureMLRun.log("How To Output","Files saved to the outputs/ directory stays available after the run.")
+
 # let user feed in 2 parameters, the dataset to mount or download, and the regularization rate of the logistic regression model
 parser = argparse.ArgumentParser()
 parser.add_argument('--data-folder', type=str, dest='data_folder', help='data folder mounting point')
