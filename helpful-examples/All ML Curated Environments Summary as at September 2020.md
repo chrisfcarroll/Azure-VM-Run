@@ -1,80 +1,100 @@
-# Azure Machine Learning Curated Environments
+Azure Machine Learning Curated Environments
+===========================================
 
-https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments
+ 
 
-Most recent GPU-enabled Curated Environments for PyTorch & TensorFlow in uksouth in September 2020:
-- AzureML-TensorFlow-2.2-GPU
-- AzureML-PyTorch-1.6-GPU
+[https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments](https://docs.microsoft.com/en-us/azure/machine-learning/resource-curated-environments)
 
-## Generate A Full List Of Available Curated Environments In Your Location
+ 
 
-```
+### Generate A Full List Of Available Curated Environments In Your Location:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 az ml environment list -w your-workspace-name --output table
-```
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Summary Output in September 2020 for a workspace in uksouth
+ 
 
-Name                            Version  
-------------------------------  ---------
-AzureML-AutoML                  35
-AzureML-AutoML-DNN              33
-AzureML-AutoML-DNN-GPU          23
-AzureML-AutoML-DNN-Vision-GPU   14
-AzureML-AutoML-GPU              23
-AzureML-Chainer-5.1.0-CPU       36
-AzureML-Chainer-5.1.0-GPU       37
-AzureML-Dask-CPU                22
-AzureML-Dask-GPU                20
-AzureML-Designer                19
-AzureML-Designer-CV             10
-AzureML-Designer-CV-Transform   10
-AzureML-Designer-IO             18
-AzureML-Designer-NLP            14
-AzureML-Designer-PyTorch        11
-AzureML-Designer-PyTorch-Train  7
-AzureML-Designer-R              19
-AzureML-Designer-Recommender    20
-AzureML-Designer-Score          11
-AzureML-Designer-Transform      18
-AzureML-Designer-VowpalWabbit   6
-AzureML-Hyperdrive-ForecastDNN  35
-AzureML-Minimal                 36
-AzureML-PySpark-MmlSpark-0.15   32       
-AzureML-PyTorch-1.0-CPU         36
-AzureML-PyTorch-1.0-GPU         37
-AzureML-PyTorch-1.1-CPU         36
-AzureML-PyTorch-1.1-GPU         37
-AzureML-PyTorch-1.2-CPU         36
-AzureML-PyTorch-1.2-GPU         37
-AzureML-PyTorch-1.3-CPU         32
-AzureML-PyTorch-1.3-GPU         35
-AzureML-PyTorch-1.4-CPU         27
-AzureML-PyTorch-1.4-GPU         27
-AzureML-PyTorch-1.5-CPU         17
-AzureML-PyTorch-1.5-GPU         18
-AzureML-PyTorch-1.6-CPU         4
-AzureML-PyTorch-1.6-GPU         4
-AzureML-Scikit-learn-0.20.3     36
-AzureML-Sidecar                 11
-AzureML-TensorFlow-1.10-CPU     36
-AzureML-TensorFlow-1.10-GPU     37
-AzureML-TensorFlow-1.12-CPU     35
-AzureML-TensorFlow-1.12-GPU     37
-AzureML-TensorFlow-1.13-CPU     36
-AzureML-TensorFlow-1.13-GPU     37
-AzureML-TensorFlow-2.0-CPU      34
-AzureML-TensorFlow-2.0-GPU      35
-AzureML-TensorFlow-2.1-CPU      11
-AzureML-TensorFlow-2.1-GPU      12
-AzureML-TensorFlow-2.2-CPU      4
-AzureML-TensorFlow-2.2-GPU      4
-AzureML-Tutorial                49
-AzureML-VowpalWabbit-8.8.0      25
+### List only PyTorch Environments built for GPU:
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+az ml environment list -w your-workspace-name -g your-resource-group-name  --query "[?contains(name,'GPU')&&contains(name,'PyTorch')]" --output table
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-## Full Json Output in September 2020 for a workspace in uksouth
+ 
 
-```json
+Curated Environments for a workspace in uksouth<br>as at September 2020
+-----------------------------------------------------------------------
+
+ 
+
+*See below for the full json output*
+
+| Name                           | Version |
+|--------------------------------|---------|
+| AzureML-AutoML                 | 35      |
+| AzureML-AutoML-DNN             | 33      |
+| AzureML-AutoML-DNN-GPU         | 23      |
+| AzureML-AutoML-DNN-Vision-GPU  | 14      |
+| AzureML-AutoML-GPU             | 23      |
+| AzureML-Chainer-5.1.0-CPU      | 36      |
+| AzureML-Chainer-5.1.0-GPU      | 37      |
+| AzureML-Dask-CPU               | 22      |
+| AzureML-Dask-GPU               | 20      |
+| AzureML-Designer               | 19      |
+| AzureML-Designer-CV            | 10      |
+| AzureML-Designer-CV-Transform  | 10      |
+| AzureML-Designer-IO            | 18      |
+| AzureML-Designer-NLP           | 14      |
+| AzureML-Designer-PyTorch       | 11      |
+| AzureML-Designer-PyTorch-Train | 7       |
+| AzureML-Designer-R             | 19      |
+| AzureML-Designer-Recommender   | 20      |
+| AzureML-Designer-Score         | 11      |
+| AzureML-Designer-Transform     | 18      |
+| AzureML-Designer-VowpalWabbit  | 6       |
+| AzureML-Hyperdrive-ForecastDNN | 35      |
+| AzureML-Minimal                | 36      |
+| AzureML-PySpark-MmlSpark-0.15  | 32      |
+| AzureML-PyTorch-1.0-CPU        | 36      |
+| AzureML-PyTorch-1.0-GPU        | 37      |
+| AzureML-PyTorch-1.1-CPU        | 36      |
+| AzureML-PyTorch-1.1-GPU        | 37      |
+| AzureML-PyTorch-1.2-CPU        | 36      |
+| AzureML-PyTorch-1.2-GPU        | 37      |
+| AzureML-PyTorch-1.3-CPU        | 32      |
+| AzureML-PyTorch-1.3-GPU        | 35      |
+| AzureML-PyTorch-1.4-CPU        | 27      |
+| AzureML-PyTorch-1.4-GPU        | 27      |
+| AzureML-PyTorch-1.5-CPU        | 17      |
+| AzureML-PyTorch-1.5-GPU        | 18      |
+| AzureML-PyTorch-1.6-CPU        | 4       |
+| AzureML-PyTorch-1.6-GPU        | 4       |
+| AzureML-Scikit-learn-0.20.3    | 36      |
+| AzureML-Sidecar                | 11      |
+| AzureML-TensorFlow-1.10-CPU    | 36      |
+| AzureML-TensorFlow-1.10-GPU    | 37      |
+| AzureML-TensorFlow-1.12-CPU    | 35      |
+| AzureML-TensorFlow-1.12-GPU    | 37      |
+| AzureML-TensorFlow-1.13-CPU    | 36      |
+| AzureML-TensorFlow-1.13-GPU    | 37      |
+| AzureML-TensorFlow-2.0-CPU     | 34      |
+| AzureML-TensorFlow-2.0-GPU     | 35      |
+| AzureML-TensorFlow-2.1-CPU     | 11      |
+| AzureML-TensorFlow-2.1-GPU     | 12      |
+| AzureML-TensorFlow-2.2-CPU     | 4       |
+| AzureML-TensorFlow-2.2-GPU     | 4       |
+| AzureML-Tutorial               | 49      |
+| AzureML-VowpalWabbit-8.8.0     | 25      |
+
+ 
+
+ 
+
+Full Json Output
+----------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ json
 [{
   "databricks": {
     "eggLibraries": [],
@@ -1657,4 +1677,4 @@ AzureML-VowpalWabbit-8.8.0      25
   },
   "version": "4"
 }]
-```
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

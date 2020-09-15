@@ -8,7 +8,19 @@
     "communicator": "Mpi",
     "target": "ml1",
     "dataReferences": {},
-    "data": {},
+    "data": {
+      "dataset-mnist":{
+        "dataLocation":{
+          "dataset":{
+            "id": "00000000-0000-0000-000000000000",
+            },
+          "datapath":null,
+        },
+        "createOutputDirectories": false,
+        "mechanism": "mount",
+        "environmentVariableName": "mnist"
+        }
+      },
     "outputData": {},
     "jobName": null,
     "maxRunDurationSeconds": null,

@@ -51,6 +51,7 @@ model.fit(train_ds.repeat(), epochs=3, steps_per_epoch=500,
 keras.models.save_model(model,'outputs/mnist-dense4layer-after30x500steps')
 
 (v_loss,v_accuracy)=model.evaluate(val_ds)
+azuremlRun.log("Logging", 'Use azuremlRun.log("Header", "Detail") to log anything')
 azureMLRun.log('test (loss,accuracy):', (v_loss,v_accuracy))
 azureMLRun.log('test loss:', v_loss)
 azureMLRun.log('test accuracy:', v_accuracy)

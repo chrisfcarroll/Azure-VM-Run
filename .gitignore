@@ -1,7 +1,7 @@
 .azureml
-dataset-Example.json
-miscellany/outputs/
-dataset-Example.json
+dataset-example-mnist.json
+dependencies/outputs/
+dataset-example-mnist.json
 ml1.runconfig
 runoutput*.json
 outputs/

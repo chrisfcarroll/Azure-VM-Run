@@ -531,10 +531,10 @@ if(($datasetDefinitionFile) -and (test-path $datasetDefinitionFile)){
 if(-not $datasetId -and -not $chosenDatasetFile -and -not $existingDatasets){
   "
   You have not provided a dataset json file. Would you like to create and register 
-  a small dataset-Example.json file? (It will use the mnist dataset)
+  a small dataset-example-mnist.json file? (It will use the mnist dataset)
   "
   if(Ask-YesNo){
-      $chosenDatasetFile=if($datasetDefinitionFile){$datasetDefinitionFile}else{"dataset-Example.json"}        
+      $chosenDatasetFile=if($datasetDefinitionFile){$datasetDefinitionFile}else{"dataset-example-mnist.json"}        
       '{
           "datasetType": "File",
           "parameters": {
@@ -627,14 +627,14 @@ if($askScript){
   $askScript
   if(Ask-YesNo){
     $exampleScript= $(switch -regex ($environmentName){
-      "TensorFlow" { "example-tensorflow-train-mnist.py" ; break}
-      "PyTorch" { "example-pytorch-train-mnist.py" ; break}
-      "Scikit" { "example-scikit-train-mnist.py" ; break}
-      default { "example-no-framework.py" }
+      "TensorFlow" { "tensorflow-train-mnist-example.py" ; break}
+      "PyTorch" { "pytorch-train-mnist-example.py" ; break}
+      "Scikit" { "scikit-train-mnist-example.py" ; break}
+      default { "no-framework-ping-log-and-output.py" }
     })
     $script= if($script){$script}else{"train.py"}
     New-Item $script -ErrorAction SilentlyContinue
-    Copy-Item miscellany/$exampleScript $script
+    Copy-Item dependencies/$exampleScript $script
     Get-Content $script
   }else{
     write-warning "Halted at 7. Choose a script file because you didn't specify one and didn't want an example one"
@@ -766,7 +766,7 @@ if(-not $chosenEnvironment.name -or -not $experimentName -or -not $script){
 
 }else{
 
-  $content= (Get-Content miscellany/template.runconfig.json) -join [Environment]::NewLine
+  $content= (Get-Content dependencies/template.runconfig.json) -join [Environment]::NewLine
   $content= $content -replace '\$scriptFile',"$scriptFile"
   $content= $content -replace '\$framework',"$framework"
   $content= $content -replace '\$communicator',"$communicator"
@@ -782,7 +782,7 @@ if(-not $chosenEnvironment.name -or -not $experimentName -or -not $script){
 $runoutputfile="runoutput.json"
 if(Test-Path runoutput.json){
   $i=0 ; while(++$i){ if(-not (test-path "runoutput$i.json")){break} }
-  $runoutputfile="runoutput$i.json"
+  $runoutputfile="runoutput$i-at-$([DateTime]::Now.ToString("HHmmssf")).json"
 }
 
 "
