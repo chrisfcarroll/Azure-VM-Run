@@ -1,31 +1,75 @@
-# Create Azure Machine Learning Resources for Training
+# Use the `az` Commandline to Create Azure Resources for Machine Learning and Submit a Training Run
 
+- *Required:* You must have an Azure Subscription with access to create 
+resources. Get a new free-tier one in about 10 minutes at https://azure.com
+- *Required:* The script is written in PowerShell.
+
+#Extra Quick Start
+
+## 1. By Using Azure's managed infrastructure for ML training
+
+_NB to copy and paste into a non-powershell unix shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
-Create-AzMLResources-And-Submit.ps1 
-    [[-resourceGroupName] <String> [-location <StringLocationName>]] 
-    [[-workspaceName] <String>] 
-    [[-computeTargetName] <String> [-computeTargetSize <StringvmSize>]] 
-    [[-experimentName] <String>] 
-    [-datasetName <String> | -datasetDefinitionFile <path> | -datasetId <StringGuid>]
-    [-environmentFor <String> | -environmentName <String>] 
-    [-attachFolder [ Yes | No | Ask ] ] 
-    [-script <path>] 
-    [-submit] 
-    [-noConfirm]   
-    [-help] 
-    [<CommonParameters>]
+./Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1 -location uksouth `
+        -environmentFor PyTorch `
+        -submit `
+        -NoConfirm
+```
+- Will create a resourceGroup with a workspace with a compute target and an experiment all called ml1
+- Will use an example PyTorch script to train a model on an example dataset (namely mnist)
+- Will submit the run and stay attached in order to stream the logs to your console
+You can see progress and output at https://ml.azure.com or with `az ml run list`
+
+#### Cleanup
+Keeping a workspace will cost you about $1 per day. Delete the whole resource group or just the workspace with:
+```
+az group delete --name ml1
+az workspace delete --name ml1
 ```
 
-This repository is primarily about the script file `Create-AzMLResources-And-Submit.ps1`  which will help you to perform one or all of:
-  -create the nested sequence of Azure resources needed to run a script on an Azure ML computetarget 
-  -create a runconfig file for the script and the resources
-  -submit the run
+#### More 
+```
+./Create-AzMLResources-And-Submit.ps1 -?
+```
+Will tell you more.
+
+
+## 2. By using an Azure Data Science Virtual Machine image
+
+_NB to copy and paste into a non-powershell unix shell, replace the backtick line-continuation marks with backslash before pasting_
+```
+./Create-AzVM-ForDataSciencePython.ps1 ml1 ml1 -location uksouth `
+        -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials `
+        -copyLocalFolder . `
+        -commandToRun "python TensorFlow-2.x-Tutorials/11-AE/ex11AutoEncoderMnist.py"  
+```
+- Will create a resourceGroup and a Virtual Machine called ml1
+- will accept the license for the Data Science Virtual Machine image
+- Will clone the git repo
+- Will copy your local folder . to the VM
+- Will run the given command
+_NB for the final steps, SSH will ask you if you are ok to connect to the new host_
+
+#### Cleanup
+Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with:
+```
+az group delete --name ml1
+az vm delete --name ml1
+```
+
+#### More 
+```
+./Create-AzVM-ForDataSciencePython.ps1 -?
+```
+Will tell you more.
+
+#In More Detail
+
+## 1. Using Azure's managed infrastructure for ML training
 
 - The script is based on the steps at https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
 - You can use the script to the very end, or just use parts of it.
-- *Required:* You must already have an Azure Subscription with permissions to create 
-resources. If you don't have one, you can get a new one for free in about 
-10 minutes at https://azure.com
+- The script defaults to computetarget size = NC6 which is the cheapset VM size with a GPU
 
 #### Resources created
 
@@ -52,17 +96,8 @@ connect to your local desktop.
 #### Examples
 
 ```
-Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 -location uksouth
-```
-Creates:
-  -a resourceGroup named ml1 in Azure location uksouth,
-  -a workspace named ml1 in that resourceGroup,
-  -a computetarget ml1 of default size (nc6) in the workspace
-and stops
-  
-```
 Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1
-  -datasetName mnist-dataset 
+  -datasetName mnist 
   -environmentFor TensorFlow 
   -script ./scripts/train.py
   -attachFolder Yes
@@ -70,22 +105,45 @@ Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1
 Will do these steps:
  - Ensure or creates:
      - a resourceGroup, a workspace, a computetarget and an experiment, all called ml1
- - Ensure a dataset named mnist-dataset already exists in your workspace
+ - Ensure a dataset named mnist exists in your workspace
  - Pick the alphabetically last environment with name matching TensorFlow
- - Ensure the script ./scripts/train.py
+ - Ensure the script ./scripts/train.py exists
  - Attach your current folder to the workspace
- - Generate a runconfig file called ml1.runconfig
+ - Generate a runconfig file called ml1-ml1.runconfig
  - Show you the command line to submit the run
-If you add the -submit flag it will also start the run
+_If you add the -submit flag it will also start the run_
+
+```
+Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 -location uksouth
+```
+Creates:
+  -a resourceGroup named ml1 in Azure location uksouth,
+  -a workspace named ml1 in that resourceGroup,
+  -a computetarget ml1 of default size (nc6) in the workspace
+and then stops, telling you what else you must specify to proceed
 
 ####Show me the GUI?
 
 The GUI way to do this is at https://ml.azure.com, and it can take you through
 similar initial steps as this script. 
 You can also use the GUI as a dashboard, to see that what the script does
-appears as expected in your azure account.
+appears as expected in your azure account, and to see experiment results
 
-## Azure GPU options
+
+## 2. Using an Azure Data Science Virtual Machine' image for ML training or work
+
+- Microsoft have published several “Data Science Virtual Machine” images. The script uses the one recommended for CUDA which is:
+`microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09`
+- The script defaults to VM size = NC6 which is the cheapset VM size with a GPU
+- Advantages of a VM over a computetarget: 
+  - Interactive not batch. You can SSH to the VM or connect from X-windows, so it's a desktop experience
+  - Often (in my experience) faster startup and no waiting in a queue for resources
+- All the parameters `-gitRepository  -copyLocalFolder -commandToRun` will run with current directory as the Home directory, so copied or git-cloned folders can be referenced with a simple relative path, as in the example above.
+
+
+## Addenda
+
+### Comments on Azure GPU options
 
 A computetarget is a VM or at least it is specified with a VM size. You'll want to be sure to use a VMSize that includes a GPU.
 

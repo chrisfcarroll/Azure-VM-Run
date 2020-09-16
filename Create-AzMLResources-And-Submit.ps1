@@ -240,24 +240,33 @@ if((-not $resourceGroupName -and -not $workspaceName) -or $help)
 
 # ----------------------------------------------------------------------------
 "
-[Prequisite] Is az CLI is installed and the az Machine Learning CLI extension?"
+[Prequisite] Are az CLI and the az CLI Machine Learning extension installed?"
 $azcli=(Get-Command az -ErrorAction SilentlyContinue)
 if($azcli){
   "✅ Found at " + $azcli.Path
 }else{
-  Start-Process "https://www.bing.com/search?q=install+az+cli+site:microsoft.com"
-  throw "az cli not found in path. 
-        Find installation instructions via https://www.bing.com/search?q=install+az+cli+site:microsoft.com
-        Having installed the CLI, don't forget to 
+  $for= $(if($IsMacOS){'macos'}elseif($IsWindows){'windows'}elseif($IsLinux){'Linux'}else{''})
+  $installurl="https://www.bing.com/search?q=install+az+cli+$for+site:microsoft.com"
+  #Start-Process $installurl
+  write-error "az executable not found in path. 
+        Find installation instructions for $for via
+        
+        $installurl
+        
+        Having installed the CLI, don't forget to
+        
         >az login 
+        
         to confirm you can connect to your subscription."
+  exit
 }
 az extension add -n azure-cli-ml
 if($?){
   "✅ OK"
 }else{
   Start-Process "https://www.bing.com/search?q=az+cli+install+extension+ml+failed"
-  throw "Failed when adding extension azure-cli-ml. Not sure where to go from here."
+  write-error "Failed when adding extension azure-cli-ml. Not sure where to go from here."
+  exit
 }
 
 "Continuing with
@@ -743,7 +752,7 @@ switch -wildcard ($chosenEnvironment.docker.baseImage){
    "
 
 $configDir="$(if(test-path .azureml){'.azureml/'})"
-$runconfigName="$experimentName-$chosenEnvironment-$computeTargetName"
+$runconfigName="$experimentName-$($chosenEnvironment.name)-$computeTargetName"
 $runconfigPath="$configDir$runconfigName.runconfig"
 
 if(test-path $runconfigPath){

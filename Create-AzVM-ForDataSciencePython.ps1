@@ -242,9 +242,19 @@ if(-not $vmIp){
     write-warning "A VM called $name already exists. Skipping creation."
 
   }else{
+    $isNewlyCreatedVM=$true
+    $result=(az vm create -g $resourceGroupName --name $name --image $imageUrn --generate-ssh-keys --size "$($pricingTier)_$size")
+    $ok=$?
+    if(-not $ok){
+      write-warning "$ok $result"
+      write-warning"
+      Stopping because the command
 
-    $result=(az vm create -g ml1 --name $name --image $imageUrn --generate-ssh-keys --size "$($pricingTier)_$size")
-    if(-not $?){write-warning $result}
+      >az vm create -g $resourceGroupName --name $name --image $imageUrn --generate-ssh-keys --size `"$($pricingTier)_$size`"
+
+      failed.
+      "
+    }
 
     $vmIp= (ConvertFrom-Json ($result -join " ") -NoEnumerate -AsHashtable).publicIpAddress
   }
@@ -254,15 +264,27 @@ if(-not $vmIp){
 
 # --------------------------------------------------------------------------
 "
-5. Connect to the VM, create working directory, download git repo, copy copyLocalFolder
+5. Connect to the VM, create working directory, download git repo, copy local folder
 "
+if($isNewlyCreatedVM){
+  "
+  Waiting as much as a minute or more before trying to connect to the VM ...
+  "
+  sleep 30
+}
+$sshOK=$true
 
 if($copyLocalFolder){
+  $target=(Split-Path $copyLocalFolder -Leaf)
+  ssh $vmIp mkdir -p $target
+  $sshOK=($?)
+  $sshOK
   "
-  5.1 Copying $copyLocalFolder/* to VM ...
+  5.1 Copying $copyLocalFolder/* to VM: $target
   "
-  ssh $vmIp mkdir -p $copyLocalFolder
-  scp $copyLocalFolder/* $($vmIp):$copyLocalFolder/
+  scp -r $copyLocalFolder/* $vmIp`:$target
+  $sshOK=($?) -and $sshOK
+  $sshOK
 }
 
 if($gitRepository){
@@ -270,6 +292,8 @@ if($gitRepository){
   5.2 Git cloning $gitRepository ...
   "
   ssh $vmIp "git clone $gitRepository"
+  $sshOK=($?) -and $sshOK
+  $sshOK
 }
 "✅ OK"
 
@@ -279,7 +303,31 @@ if($gitRepository){
 "
 if($commandToRun){
   ssh $vmIp -t tmux new-session -d -s "Create-AzVM-ForDataSciencePython-CommandToRun" $commandToRun
+  $sshOK=($?) -and $sshOK
+  $sshOK
+  "
+  If you are not familiar with tmux, re-attach to a detached session like this:
+    ssh $vmIp
+    tmux attach
+    #
+    # tmux ls will show if any sessions are running
+    #
+  "
 }else{
   "No command specified"
 }
+
+if(-not $sshOK){
+  write-warning "
+  Not all ssh commands ran without error. See the output above for details.
+  "
+  if($isNewlyCreatedVM){
+    write-warning "
+    On a newly created VM, you may have to wait a minute or more before you can connect.
+    Rerun after waiting, with the same parameters.
+    "    
+  }
+
+}
+
 "✅ OK"
