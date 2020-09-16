@@ -72,17 +72,17 @@ az vm delete --name ml1
 #### Resources created
 
 What is needed to create, use, & tear down cloud-based ML resources?
-
+<pre>
 [Azure Subscription]
-  └── ResourceGroup (at a location)
-      └── WorkSpace
+  └── ResourceGroup (at a location) : keeps AZ resources together
+      └── WorkSpace : keep your ML work and resources together
           ├── Computetarget (with a vmSize which may include GPU)
           ├── Dataset(s) (optional)
-          └── Experiment
-              └── runconfig 
+          └── Experiment : Keep related runs together
+              └── runconfig file
                   (which references the computetarget, the optional dataset, 
                    the experiment and a script)
-
+</pre>
 The *workspace* is the primary Machine Learning container. It offers shared 
 access to resources, can be accessed from https://ml.azure.com and can 
 connect to your local desktop.
