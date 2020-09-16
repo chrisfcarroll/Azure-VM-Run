@@ -210,8 +210,10 @@ if($resourceGroupName ){
 "
 2. Check for existing VM called $name in $resourceGroupName ...
 "
-$vmIp=(az vm list-ip-addresses -g $resourceGroupName --name $name --query "[0].virtualMachine.network.publicIpAddresses[0].ipAddress")
-if($vmIp){"Found at $vmIP"}else{"Creating new VM ..."}
+$vmIp=(az vm list-ip-addresses -g $resourceGroupName --name $name `
+       --query "[0].virtualMachine.network.publicIpAddresses[0].ipAddress" `
+       ).Trim('"')
+if($vmIp){"Found at $vmIP" ; }else{"Creating new VM ..."}
 "✅ OK"
 
 #-----------------------------------------------------------------------------
@@ -272,19 +274,16 @@ if($isNewlyCreatedVM){
   "
   sleep 30
 }
-$sshOK=$true
+$sshOK=@()
 
 if($copyLocalFolder){
   $target=(Split-Path $copyLocalFolder -Leaf)
   ssh $vmIp mkdir -p $target
-  $sshOK=($?)
-  $sshOK
   "
   5.1 Copying $copyLocalFolder/* to VM: $target
   "
   scp -r $copyLocalFolder/* $vmIp`:$target
-  $sshOK=($?) -and $sshOK
-  $sshOK
+  $sshOK += ,$(if($?){"✅ copyLocalFolder"}else{"❌ copyLocalFolder errored"})
 }
 
 if($gitRepository){
@@ -292,42 +291,38 @@ if($gitRepository){
   5.2 Git cloning $gitRepository ...
   "
   ssh $vmIp "git clone $gitRepository"
-  $sshOK=($?) -and $sshOK
-  $sshOK
+  $sshOK += ,$(if($?){"✅ git cloned"}else{"❌ git clone errored"})
 }
 "✅ OK"
 
 # --------------------------------------------------------------------------
 "
-6. Run command $commandToRun in a detached tmux session ...
+6. Run command $commandToRun in a detached tmux session named main ...
 "
 if($commandToRun){
-  ssh $vmIp -t tmux new-session -d -s "Create-AzVM-ForDataSciencePython-CommandToRun" $commandToRun
-  $sshOK=($?) -and $sshOK
-  $sshOK
+  $tmuxbashcommand= "bash -ilc `'$($commandToRun -replace '"','\"' -replace "'","\'")`'"
+  ssh $vmIp -t tmux new-session -d -s main $tmuxbashcommand
+  $sshOK += ,$(if($?){"✅ started command"}else{"❌ start command errored"})
   "
-  If you are not familiar with tmux, re-attach to a detached session like this:
-    ssh $vmIp
-    tmux attach
-    #
+  If you are not familiar with tmux, re-attach to the detached session—called main—like this:
+
+    #Connect to the VM
+    ssh $vmIp 
+    
+    #At the VM prompt:
+    tmux attach -t main
+    
     # tmux ls will show if any sessions are running
-    #
+    # tmux will recognise the keystroke sequence Ctrl-B d as a command to detach again.
   "
 }else{
   "No command specified"
 }
 
-if(-not $sshOK){
+if($isNewlyCreatedVM){
   write-warning "
-  Not all ssh commands ran without error. See the output above for details.
-  "
-  if($isNewlyCreatedVM){
-    write-warning "
-    On a newly created VM, you may have to wait a minute or more before you can connect.
-    Rerun after waiting, with the same parameters.
-    "    
-  }
-
+  On a newly created VM, you may have to wait a minute or more before you can connect.
+  Rerun after waiting, with the same parameters.
+  "    
 }
-
-"✅ OK"
+$sshOK
