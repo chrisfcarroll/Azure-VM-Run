@@ -20,17 +20,18 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 - Will submit the run and stay attached in order to stream the logs to your console
 You can see progress and output at https://ml.azure.com or with `az ml run list`
 
-#### Cleanup
+### Yes but what about … ?
+```
+./Create-AzMLResources-And-Submit.ps1 -?
+```
+
+### Cleanup
 Keeping a workspace will cost you about $1 per day. Delete the whole resource group or just the workspace with:
 ```
 az group delete --name ml1
 az workspace delete --name ml1
 ```
 
-#### More Details including TensorFlow etc
-```
-./Create-AzMLResources-And-Submit.ps1 -?
-```
 
 
 ## Option 2. Using an Azure Data Science Virtual Machine image
@@ -50,16 +51,16 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 
 _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
 
-#### Cleanup
+### Yes but what about … ?
+```
+./Create-AzVM-ForDataSciencePython.ps1 -?
+```
+
+### Cleanup
 Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with:
 ```
 az group delete --name ml1
 az vm delete --name ml1
-```
-
-#### More Details:
-```
-./Create-AzVM-ForDataSciencePython.ps1 -?
 ```
 
 # In More Detail
