@@ -1,14 +1,14 @@
-# Use the `az` Commandline to Create Azure Resources for Machine Learning and Submit a Training Run
+## Use the `az` Commandline to Create Azure Resources for Machine Learning and Submit a Training Run
 
-- *Required:* You must have an Azure Subscription with access to create 
-resources. Get a new free-tier one in about 10 minutes at https://azure.com
-- *Required:* The script is written in PowerShell.
+- *Required:* An [Azure Subscription](https://azure.com) with access to create resources
+- *Required:* The script is written in [PowerShell](https://github.com/PowerShell/PowerShell)
+- *Required:* Step 0 is to [install the az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
-#Extra Quick Start
+# Extra Quick Start
 
 ## 1. By Using Azure's managed infrastructure for ML training
 
-_NB to copy and paste into a non-powershell unix shell, replace the backtick line-continuation marks with backslash before pasting_
+_NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
 ./Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1 -location uksouth `
         -environmentFor PyTorch `
@@ -36,7 +36,7 @@ Will tell you more.
 
 ## 2. By using an Azure Data Science Virtual Machine image
 
-_NB to copy and paste into a non-powershell unix shell, replace the backtick line-continuation marks with backslash before pasting_
+_NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
 ./Create-AzVM-ForDataSciencePython.ps1 ml1 ml1 -location uksouth `
         -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials `
