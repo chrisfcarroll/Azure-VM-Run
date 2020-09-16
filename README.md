@@ -64,6 +64,12 @@ az vm delete --name ml1
 
 # In More Detail
 
+Azure offers two approaches to cloud ML:
+1. A managed service with a “devops” style dashboard that can e.g. gather 
+metrics from your training runs. 
+2. Or, just a plain virtual machine. (Well, plainish: it runs X-windows
+so you can connect to it as a graphical workstation, not just by command line).
+
 ## 1. Using Azure's managed infrastructure for ML training
 
 - You can use the script to the very end, or just use parts of it.
@@ -138,7 +144,6 @@ appears as expected in your azure account, and to see experiment results
   - Often (in my experience) faster startup and no waiting in a queue for resources
 - All the parameters `-gitRepository  -copyLocalFolder -commandToRun` will run with current directory as the Home directory, so copied or git-cloned folders can be referenced with a simple relative path, as in the example above.
 
-
 ## Addenda
 
 ### Comments on Azure GPU options
@@ -173,3 +178,9 @@ NCsv3, NCsv2, NC and NDs VMs offer optional InfiniBand interconnect to enable sc
 ### GPU optimized virtual machine sizes
 
 https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-gpu?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json
+
+
+### MacOs X-Windows connections
+- https://www.xquartz.org/
+- https://serverfault.com/questions/273847/what-does-warning-untrusted-x11-forwarding-setup-failed-xauth-key-data-not-ge
+- https://serverfault.com/questions/422908/how-can-i-prevent-the-warning-no-xauth-data-using-fake-authentication-data-for
