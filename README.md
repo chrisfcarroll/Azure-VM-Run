@@ -66,9 +66,8 @@ az vm delete --name ml1
 
 ## 1. Using Azure's managed infrastructure for ML training
 
-- The script is based on the steps at https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
 - You can use the script to the very end, or just use parts of it.
-- The script defaults to computetarget size = NC6 which is the cheapset VM size with a GPU
+- The script defaults to `computetarget size = NC6` which is the cheapset VM size with a GPU
 
 #### Resources created
 
