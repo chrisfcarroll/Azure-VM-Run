@@ -3,7 +3,7 @@
 
 #### *Required:*
 1. An [Azure Subscription](https://azure.com) with access to create resources
-2. The script is written in [PowerShell](https://github.com/PowerShell/PowerShell)
+2. These scripts are written in [PowerShell](https://github.com/PowerShell/PowerShell)
 3. Step 0 is to [install the az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 ## Option 1. Using Azure's managed infrastructure for ML training
