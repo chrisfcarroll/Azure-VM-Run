@@ -6,3 +6,4 @@ ml1.runconfig
 runoutput*.json
 outputs/
 **/*.sublime-workspace
+example-*
