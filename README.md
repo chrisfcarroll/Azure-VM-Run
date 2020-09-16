@@ -142,6 +142,7 @@ appears as expected in your azure account, and to see experiment results
 
 - Microsoft have published several “Data Science Virtual Machine” images. The script uses the one recommended for CUDA which is:
 `microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09`
+- The images are preloaded with python, R studio, and a shed-load of python ML frameworks.
 - The script defaults to VM size = NC6 which is the cheapset VM size with a GPU
 - Advantages of a VM over a computetarget: 
   - Interactive not batch. You can SSH to the VM or connect from X-windows, so it's a desktop experience
