@@ -61,7 +61,7 @@ az vm delete --name ml1
 ./Create-AzVM-ForDataSciencePython.ps1 -?
 ```
 
-#In More Detail
+# In More Detail
 
 ## 1. Using Azure's managed infrastructure for ML training
 
@@ -120,7 +120,7 @@ Creates:
   -a computetarget ml1 of default size (nc6) in the workspace
 and then stops, telling you what else you must specify to proceed
 
-####Show me the GUI?
+#### Show me the GUI?
 
 The GUI way to do this is at https://ml.azure.com, and it can take you through
 similar initial steps as this script. 
