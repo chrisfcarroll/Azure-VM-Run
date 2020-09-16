@@ -1,9 +1,10 @@
 # `az ml` Quickstart
 ## Create Azure machine learning resources and submit a run, from scratch in 10 minutes
 
-- *Required:* An [Azure Subscription](https://azure.com) with access to create resources
-- *Required:* The script is written in [PowerShell](https://github.com/PowerShell/PowerShell)
-- *Required:* Step 0 is to [install the az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+#### *Required:*
+1. An [Azure Subscription](https://azure.com) with access to create resources
+2. The script is written in [PowerShell](https://github.com/PowerShell/PowerShell)
+3. Step 0 is to [install the az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 ## Option 1. Using Azure's managed infrastructure for ML training
 
@@ -14,8 +15,8 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
         -submit `
         -NoConfirm
 ```
-- Will create a resourceGroup with a workspace with a compute target and an experiment all called ml1
-- Will use an example PyTorch script to train a model on an example dataset (namely mnist)
+- Will create a `Resource Group` with a `Workspace` with a `computetarget` and an `experiment` all named ml1
+- Will give you an example PyTorch script and an example dataset (namely mnist) to train a model
 - Will submit the run and stay attached in order to stream the logs to your console
 You can see progress and output at https://ml.azure.com or with `az ml run list`
 
@@ -26,11 +27,10 @@ az group delete --name ml1
 az workspace delete --name ml1
 ```
 
-#### More 
+#### More Details including TensorFlow etc
 ```
 ./Create-AzMLResources-And-Submit.ps1 -?
 ```
-Will tell you more.
 
 
 ## Option 2. Using an Azure Data Science Virtual Machine image
@@ -42,12 +42,12 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
         -copyLocalFolder . `
         -commandToRun "python TensorFlow-2.x-Tutorials/11-AE/ex11AutoEncoderMnist.py"  
 ```
-- Will create a resourceGroup and a Virtual Machine called ml1
+- Will create a `Resource Group` and a `Virtual Machine` both named ml1
 - will accept the license for the Data Science Virtual Machine image
-- Will clone the git repo
-- Will copy your local folder . to the VM
+- Will clone the git repo specified
+- Will copy the local folder specified to the VM
 - Will run the given command
-_NB for the final steps, SSH will ask you if you are ok to connect to the new host_
+_NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
 
 #### Cleanup
 Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with:
@@ -56,11 +56,10 @@ az group delete --name ml1
 az vm delete --name ml1
 ```
 
-#### More 
+#### More Details:
 ```
 ./Create-AzVM-ForDataSciencePython.ps1 -?
 ```
-Will tell you more.
 
 #In More Detail
 
