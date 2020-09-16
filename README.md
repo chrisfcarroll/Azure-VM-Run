@@ -21,8 +21,10 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 You can see progress and output at https://ml.azure.com or with `az ml run list`
 
 ### Yes but what about … ?
+The script can take you from the pre-canned example to defining  your own datasets, using TensorFlow
+or other ML frameworks, specifying computetarget sizes, etc.
 ```
-./Create-AzMLResources-And-Submit.ps1 -?
+./Create-AzMLResources-And-Submit.ps1 -? # Call the script with -? to see more options and much more detail
 ```
 
 ### Cleanup
@@ -31,8 +33,6 @@ Keeping a workspace will cost you about $1 per day. Delete the whole resource gr
 az group delete --name ml1
 az workspace delete --name ml1
 ```
-
-
 
 ## Option 2. Using an Azure Data Science Virtual Machine image
 
@@ -52,9 +52,12 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
 
 ### Yes but what about … ?
+The script is intended to be simple. Use your own git repo or local folder, and specify your own `commandToRun`.
 ```
-./Create-AzVM-ForDataSciencePython.ps1 -?
+./Create-AzVM-ForDataSciencePython.ps1 -? # Call the script with -? to see more options and more detail
 ```
+To really make use of a VM you will want to be familiar with `ssh` & your choice of unix shell and/or `X-windows`.
+The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
 
 ### Cleanup
 Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with:
@@ -66,10 +69,10 @@ az vm delete --name ml1
 # In More Detail
 
 Azure offers two approaches to cloud ML:
-1. A managed service with a “devops” style dashboard that can e.g. gather 
-metrics from your training runs. 
-2. Or, just a plain virtual machine. (Well, plainish: it runs X-windows
-so you can connect to it as a graphical workstation, not just by command line).
+1. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that 
+  can e.g. gather metrics from your training runs. 
+2. Or, just a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/).
+   (Well, plainish: it runs X-windows so you can connect to it as a graphical workstation, not just by command line).
 
 ## 1. Using Azure's managed infrastructure for ML training
 
