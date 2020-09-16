@@ -47,6 +47,7 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 - Will clone the git repo specified
 - Will copy the local folder specified to the VM
 - Will run the given command
+
 _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
 
 #### Cleanup
