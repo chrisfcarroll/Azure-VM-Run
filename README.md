@@ -1,12 +1,11 @@
-## Use the `az` Commandline to Create Azure Resources for Machine Learning and Submit a Training Run
+# `az ml` Quickstart
+## Create Azure machine learning resources and submit a run, from scratch in 10 minutes
 
 - *Required:* An [Azure Subscription](https://azure.com) with access to create resources
 - *Required:* The script is written in [PowerShell](https://github.com/PowerShell/PowerShell)
 - *Required:* Step 0 is to [install the az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
-# Extra Quick Start
-
-## 1. By Using Azure's managed infrastructure for ML training
+## Option 1. Using Azure's managed infrastructure for ML training
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
@@ -34,7 +33,7 @@ az workspace delete --name ml1
 Will tell you more.
 
 
-## 2. By using an Azure Data Science Virtual Machine image
+## Option 2. Using an Azure Data Science Virtual Machine image
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
