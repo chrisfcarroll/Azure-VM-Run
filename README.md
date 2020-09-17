@@ -5,8 +5,8 @@
 
 ### A: You Could:
 
--   Use `az ml run submit-script` and learn about the sequence of 7
-    (yes, seven) resources & files you will need to create before it works
+-   Use `az ml run submit-script` and learn about the sequence of 8
+    (yes, eight) resources & files you will need to create before it works
 -   Or go old-school, and script a VM and send a repo and data to it over ssh
 
 ### OR You Could:
@@ -28,14 +28,12 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
         -submit `
         -NoConfirm
 ```
-- will provision: `1` a `Resource Group` with `2` a `Workspace` with `3` a `computetarget` and `4` an `experiment` all named ml1
-- Will generate `5` an `example PyTorch script` and `6` an `example dataset` (namely mnist) to train a model and generate `7` a `runconfig` file readable by `az ml run submit-script`
-- Will submit it, and stay attached in order to stream the logs to your console.
-You can see progress and output at https://ml.azure.com or see status at `az ml run list`
+- will provision: `1.` a `Resource Group` with `2.` a `Workspace` and `3.` a `computetarget` and configure `4.` an `experiment`, all named ml1
+- will choose `5.` an `Environment` for PyTorch, then generate `6.` an `example PyTorch script` and `7.` an `example dataset` (namely mnist) to train a model and finally generate `8.` a `runconfig` file readable by `az ml run submit-script`
+- Will submit it, and stay attached in order to stream the logs to your console. You can see progress and output at https://ml.azure.com or see status at `az ml run list`
 
 ### Yes but what about … ?
-The script can take you from the pre-canned example to defining your own datasets, using TensorFlow
-or other ML frameworks, specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and much more detail:
+The script can take you from the pre-canned example to defining your own datasets, using [other ML frameworks (TensorFlow etc)](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md), specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and more detail.
 ```
 ./Create-AzMLResources-And-Submit.ps1 -?
 ```
