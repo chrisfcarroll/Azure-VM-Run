@@ -4,7 +4,9 @@
 
 <#
 .Synopsis
+
 Create-AzMLResources-And-Submit.ps1 can perform one or all of:
+
   -create the nested sequence of Azure resources needed to run a script on an Azure ML computetarget 
   -create a runconfig file for the script and the resources
   -submit the run
@@ -120,7 +122,7 @@ Param(
   ##https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal
   [Parameter(Position=0)][Alias('g')][string]$resourceGroupName, 
 
-  ##An Azure region name. Only required when creating a new ResourceGroup at step 2. 
+  ##An Azure region name. Only required when creating a new Resource Group at step 1.
   ##Thereafter the ResourceGroup is all the location you need.
   [string]$location,
 
