@@ -117,10 +117,7 @@ connect to your local desktop.
   takes a couple of minutes, and that is the first part of what this 
   script automates.
 
-##### This Script will Take You Through These Steps
-
-This Script will Take You Through These Steps
----------------------------------------------
+#### This Script will Take You Through These Steps
 
 1. Create a Resource Group. This is Azure's way to 'keep together' related
    resources. It is tied to an azure location and is free.
