@@ -15,10 +15,10 @@ More detail : https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart
 
 .Description
 
-[Prequisite] Install az cli tool & ml extensions. Be able to access your account
-
 This Script will Take You Through These Steps
 ---------------------------------------------
+
+[Step zero] Install az cli tool & ml extensions. Be able to access your account
 
 1. Create a Resource Group. This is Azure's way to 'keep together' related
    resources. It is tied to an azure location and is free.
