@@ -30,7 +30,7 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 ```
 - will provision: `1.` a `Resource Group` with `2.` a `Workspace` and `3.` a `computetarget` and configure `4.` an `experiment`, all named ml1
 - will choose `5.` an `Environment` for PyTorch, then generate `6.` an `example PyTorch script` and `7.` an `example dataset` (namely mnist) to train a model and finally generate `8.` a `runconfig` file readable by `az ml run submit-script`
-- Will submit it, and stay attached in order to stream the logs to your console. You can see progress and output at https://ml.azure.com or see status at `az ml run list`
+- will submit the script and stay attached, streaming the logs to your console. You can see progress and output at https://ml.azure.com or see status at `az ml run list`
 
 ### Yes but what about … ?
 The script can take you from the pre-canned example to defining your own datasets, using [other ML frameworks (TensorFlow etc)](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md), specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and more detail.
