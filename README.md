@@ -9,7 +9,7 @@
     (yes, seven) resources & files you will need to create before it works
 -   Or go old-school, and script a VM and send a repo and data to it over ssh
 
-#### OR You Could:
+### OR You Could:
 -   Use these two scripts to do either of those two tasks for you in 10 minutes _and_ help 
     you learn how it all worked at your leisure.
 
