@@ -81,7 +81,7 @@ The script is intended to be simple. Use your own git repo or local folder, and 
 To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
 The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
 
-### Cleanup
+### Tear Down
 Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with one of:
 ```
 az group delete --name ml1
@@ -92,17 +92,17 @@ az vm delete --name ml1
 
 Azure offers two approaches to cloud ML:
 1. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs. 
-2. Or, just a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/). (Well, plainish: it runs X-windows so you can connect to it as a graphical workstation, not just by command line).
+2. Or, a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/). Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
 
-## 1. Using Azure's managed infrastructure for ML training
+## Option 1. Using Azure's managed infrastructure for ML training
+- The script steps through the 7 resources and files you need, one at a time,
+- It defaults to `computetarget size = NC6` which is the cheapset VM size with a GPU
+- It will find an [AzureML curated environment](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md) for you if you type part of the name, e.g. Scikit
+- Most importantly it generates a usable `runconfig` file that describes all the resources used and that `az ml run submit-script` can parse.
 
-- You can use the script to the very end, or just use parts of it.
-- The script defaults to `computetarget size = NC6` which is the cheapset VM size with a GPU
-- The script will find an [AzureML curated environment](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md) for you if you type part of the name, e.g. Scikit
+#### Resources created for managed ML
 
-#### Resources created
-
-What is needed to create, use, & tear down cloud-based ML resources?
+What is needed to create, use, & tear down managed cloud-based ML resources?
 <pre>
 [Azure Subscription]
   └── ResourceGroup (at a location) : keeps AZ resources together
@@ -152,7 +152,7 @@ Creates:
   -a computetarget ml1 of default size (nc6) in the workspace
 and then stops, telling you what else you must specify to proceed
 
-## 2. Using an Azure Data Science Virtual Machine' image for ML training or work
+## Option 2. Using an Azure Data Science Virtual Machine' image for ML training or work
 
 - Microsoft have published several “Data Science Virtual Machine” images. The script uses one recommended for CUDA which is:
 `microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09`
