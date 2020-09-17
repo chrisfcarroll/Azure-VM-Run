@@ -30,8 +30,8 @@ or other ML frameworks, specifying computetarget sizes, etc.
 ### Cleanup
 Keeping a workspace will cost you about $1 per day. Delete the whole resource group or just the workspace with one of:
 ```
+az ml workspace delete -w ml1 -g ml1
 az group delete --name ml1
-az ml workspace delete --name ml1
 ```
 
 ## Option 2. Using an Azure Data Science Virtual Machine image
