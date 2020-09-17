@@ -7,7 +7,7 @@
 
 -   Use `az ml run submit-script` and learn about the sequence of 8
     (yes, eight) resources & files you will need to create before it works
--   Or go old-school, and script a VM and send a repo and data to it over ssh
+-   Go old-school, and script a VM and send a repo and data to it over ssh
 
 ### OR You Could:
 -   Use these two scripts to do either of those two tasks for you in 10 minutes _and_ help 
