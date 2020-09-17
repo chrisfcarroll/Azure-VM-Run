@@ -28,7 +28,7 @@ or other ML frameworks, specifying computetarget sizes, etc.
 ```
 
 ### Cleanup
-Keeping a workspace will cost you about $1 per day. Delete the whole resource group or just the workspace with:
+Keeping a workspace will cost you about $1 per day. Delete the whole resource group or just the workspace with one of:
 ```
 az group delete --name ml1
 az ml workspace delete --name ml1
@@ -60,7 +60,7 @@ To really make use of a VM you will want to be familiar with `ssh` & your choice
 The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
 
 ### Cleanup
-Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with:
+Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with one of:
 ```
 az group delete --name ml1
 az vm delete --name ml1
