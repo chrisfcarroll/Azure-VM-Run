@@ -1,0 +1,27 @@
+#! /usr/bin/env bash
+docker build -t az .
+echo "
+-----------------------------------------------------------------------
+This opens a docker container connected to the current directory.
+
+Once docker has connected, run:
+
+cd /opt/az-ml-qs
+az login
+
+and then try out the example command line:
+
+./Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1 -location uksouth \`
+        -environmentFor PyTorch  \`
+        -submit \`
+        -NoConfirm
+
+and/or
+
+./Create-AzMLResources-And-Submit.ps1 -? | less
+-----------------------------------------------------------------------
+"
+docker run --rm -it -v $(pwd):/opt/az-ml-qs az pwsh -interactive -NoExit -command "cd /opt/az-ml-qs"
+
+# fish:
+# docker run --rm -it -v (pwd):/opt/az-ml-qs az pwsh -interactive -NoExit -command "cd /opt/az-ml-qs ; ls -l Create-AzML*ps1"

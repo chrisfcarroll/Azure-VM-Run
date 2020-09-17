@@ -243,7 +243,7 @@ if((-not $resourceGroupName -and -not $workspaceName) -or $help)
 [Prequisite] Are az CLI and the az CLI Machine Learning extension installed?"
 $azcli=(Get-Command az -ErrorAction SilentlyContinue)
 if($azcli){
-  "✅ Found at " + $azcli.Path
+  "✅ Found CLI at " + $azcli.Path
 }else{
   $for= $(if($IsMacOS){'macos'}elseif($IsWindows){'windows'}elseif($IsLinux){'Linux'}else{''})
   $installurl="https://www.bing.com/search?q=install+az+cli+$for+site:microsoft.com"
@@ -260,6 +260,7 @@ if($azcli){
         to confirm you can connect to your subscription."
   exit
 }
+"Ensure the az ml extension is installed?"
 az extension add -n azure-cli-ml
 if($?){
   "✅ OK"
@@ -385,6 +386,8 @@ if($computeTargetName ){
     (This will be created with min-nodes=0 and max-nodes=1 so it will be free when not in use)"
 
     Ask-YesElseThrow
+
+    "This may take 3 or 4 minutes ... "
     az ml computetarget create amlcompute -n $computeTargetName --min-nodes 0 --max-nodes 1 `
         --vm-size "$($pricingTier)_$computeTargetSize" -w $workspaceName -g $resourceGroupName
 

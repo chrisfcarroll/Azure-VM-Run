@@ -146,7 +146,7 @@ if(-not $name -or -not $resourceGroupName -or $help)
 [Prequisite] Is az CLI is installed and the az Machine Learning CLI extension?"
 $azcli=(Get-Command az -ErrorAction SilentlyContinue)
 if($azcli){
-  "✅ Found at " + $azcli.Path
+  "✅ Found cli at " + $azcli.Path
 }else{
   Start-Process "https://www.bing.com/search?q=install+az+cli+site:microsoft.com"
   throw "az cli not found in path. 
@@ -155,6 +155,7 @@ if($azcli){
         >az login 
         to confirm you can connect to your subscription."
 }
+" Ensure the ml extension is installed?"
 az extension add -n azure-cli-ml
 if($?){
   "✅ OK"
