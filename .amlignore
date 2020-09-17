@@ -7,3 +7,5 @@ azureml-setup
 docs
 dependencies
 helpful-examples
+Dockerfile
+do-it-in-docker

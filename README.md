@@ -93,10 +93,6 @@ Azure offers two approaches to cloud ML:
 2. Or, a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/). Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
 
 ## Option 1. Using Azure's managed infrastructure for ML training
-- The script steps through the 7 resources and files you need, one at a time,
-- It defaults to `computetarget size = NC6` which is the cheapset VM size with a GPU
-- It will find an [AzureML curated environment](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md) for you if you type part of the name, e.g. Scikit
-- Most importantly it generates a usable `runconfig` file that describes all the resources used and that `az ml run submit-script` can parse.
 
 #### Resources created for managed ML
 
@@ -120,6 +116,45 @@ connect to your local desktop.
 - To create and destroy a workspace each time you start work typically 
   takes a couple of minutes, and that is the first part of what this 
   script automates.
+
+##### This Script will Take You Through These Steps
+
+This Script will Take You Through These Steps
+---------------------------------------------
+
+1. Create a Resource Group. This is Azure's way to 'keep together' related
+   resources. It is tied to an azure location and is free.
+
+2. In the Resource Group, create a Workspace. This will allocate
+   some storage, and an unused workspace will cost you around $1 per day. It
+   may take a couple of minutes to create, and slightly less time to delete.
+
+3. Within the Workspace, create a computetarget. This can be made to
+   auto-scale down to 0 nodes–i.e. no cost—when idle.
+
+4. Choose an Experiment name. This defaults to current folder name.
+
+5. Choose an Environment. Use PowerShell tab-completion to see some options.
+   An environment is typically a reference to a docker image with python and 
+   ML libraries installed e.g. TensorFlow, PyTorch, Scikit and others.
+
+6. Optionally, choose or register a Dataset.
+   The script offers to create an example mnist dataset.
+
+7. Choose a python Script to run
+   Defaults to ./train.py. The script offers to create an example one.
+
+8. Attach a local folder on your desktop to the Workspace.
+
+9. Create a runconfig referencing your environment, script, dataset, computetarget.
+
+10. Submit the runconfig
+
+--------------------------------------------------------------------------
+Not covered by this script:
+- Attach an Azure blob container as a Datastore for large datasets and uploads
+- Creating your own new Environment definition
+----------------------------------------------------------------------------
 
 #### Examples
 

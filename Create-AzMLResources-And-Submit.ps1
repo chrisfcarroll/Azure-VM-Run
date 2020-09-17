@@ -9,77 +9,42 @@ Create-AzMLResources-And-Submit.ps1 can perform one or all of:
   -create a runconfig file for the script and the resources
   -submit the run
 
+More detail : https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart
+
 .Description
-- The script is based on the steps at 
-  https://docs.microsoft.com/en-us/azure/machine-learning/tutorial-train-deploy-model-cli
 
-- You can use the script to the very end, or just use parts of it.
+[Prequisite] Install az cli tool & ml extensions. Be able to access your account
 
-- Required: You must already have an Azure Subscription with permissions to create 
-  resources. If you don't have one, you can get a new one for free in about 
-  10 minutes at https://azure.com
+This Script will Take You Through These Steps
+---------------------------------------------
 
-----------------------------------------------------------------------------
-Resources Created
+1. Create a Resource Group. This is Azure's way to 'keep together' related
+   resources. It is tied to an azure location and is free.
 
-[Azure Subscription]
-  └── ResourceGroup (at a location)
-      └── WorkSpace
-          ├── Computetarget (with a vmSize which may include GPU)
-          ├── Environments (e.g. PyTorch, TensorFlow, Scikit are available)
-          ├── Dataset(s) (optional)
-          └── Experiment
-              └── runconfig 
-                  (which references the computetarget, the optional dataset, 
-                   an environment, the experiment and a script)
+2. In the Resource Group, create a Workspace. This will allocate
+   some storage, and an unused workspace will cost you around $1 per day. It
+   may take a couple of minutes to create, and slightly less time to delete.
 
-The Workspace is the primary Machine Learning container. It offers shared 
-access to resources, can be accessed from https://ml.azure.com and can 
-connect to your local desktop.
-- Keeping an empty workspace alive costs about $1 per day.
-- To create and destroy a workspace each time you start work typically 
-  takes a couple of minutes, and that is the first part of what this 
-  script automates.
+3. Within the Workspace, create a computetarget. This can be made to
+   auto-scale down to 0 nodes–i.e. no cost—when idle.
 
-----------------------------------------------------------------------------
-The Steps
+4. Choose an Experiment name. This defaults to current folder name.
 
-[Prequisite] Install az cli tool & ml extensions and be able to access your account
+5. Choose an Environment. Use PowerShell tab-completion to see some options.
+   An environment is typically a reference to a docker image with python and 
+   ML libraries installed e.g. TensorFlow, PyTorch, Scikit and others.
 
-1. All resources are 'kept' together in a ResourceGroup. A ResourceGroup is 
-just a management convenience, tied to a location, but costing nothing.
-
-2. In the resourceGroup, you must create a workspace. This will allocate
-some storage, and an unused workspace will cost you around `$1 per day. It
-may take a couple of minutes to create, and slightly less time to delete.
-
-3. Within the workspace, you create compute instances or compute clusters. 
-Clusters have the advantage they can auto-scale down to 0 nodes–i.e. no cost—
-when idle.
-
-4. Choose an Experiment name (Defaults to current folder name)
-
-5. Choose an Environment. Azure curated environments exist for 
-   e.g. TensorFlow, PyTorch, Scikit and others
-   An environment is typically a reference to a docker image
-   with python libraries installed. 
-
-6. Optionally choose or register a Dataset
+6. Optionally, choose or register a Dataset.
    The script offers to create an example mnist dataset.
 
-7. Choose a python script to run (Defaults to ./train.py)
+7. Choose a python Script to run
+   Defaults to ./train.py. The script offers to create an example one.
 
-8. Attach a local folder on your desktop to the workspace
+8. Attach a local folder on your desktop to the Workspace.
 
-9. Create a runconfig referencing your environment, script, dataset, computetarget
+9. Create a runconfig referencing your environment, script, dataset, computetarget.
 
 10. Submit the runconfig
-
---------------------------------------------------------------------------
-Not covered by this script:
-- Attach an Azure blob container as a Datastore for large datasets and uploads
-- Creating your own new Environment
-----------------------------------------------------------------------------
 
 Usage:
 
@@ -94,9 +59,13 @@ Create-AzMLResources-And-Submit.ps1
     [-attachFolder:$false] 
     [-submit] 
     [-noConfirm]
-    [-pricingTier [Standard]]
-    [-help] 
+    [-help | -? ] 
     [<CommonParameters>]    
+
+.Link
+  README.md : https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart
+  AzureML curated environments:
+    https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md
 
 .Example
 Create-AzMLResources-And-Submit.ps1 ml1 ws1 ct1 -location uksouth
@@ -234,7 +203,9 @@ function Get-DatasetByName($name, $rg, $ws){
 # ----------------------------------------------------------------------------
 if((-not $resourceGroupName -and -not $workspaceName) -or $help)
 {
-  Get-Help $PSCommandPath
+  if(get-command less){Get-Help $PSCommandPath -Full | less}
+  elseif(get-command more){Get-Help $PSCommandPath -Full | more}
+  else{Get-Help $PSCommandPath -Full}  
   exit
 }
 
