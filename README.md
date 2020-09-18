@@ -10,12 +10,14 @@
 -   Go old-school, and script a VM and send a repo and data to it over ssh
 
 ### OR You Could:
--   Use these two scripts to do either of those two tasks for you in 10 minutes _and_ help 
-    you learn how it all worked at your leisure.
+-   Use these two scripts to do either of those two tasks for you in 10 minutes
+    _and_ help you learn how it all worked at your leisure.
 
 #### *Required:*
 
-1. An [Azure Subscription](https://azure.com) with access to create resources
+1. An [Azure Subscription](https://azure.com) with access to create resources.
+   NB This will work on a Free Tier subscriptions but provisioning will be slow
+   and you won't have any GPU.
 2. [PowerShell](https://github.com/PowerShell/PowerShell)
 3. Step zero for both options is, [install the az cli, and login](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
@@ -82,8 +84,8 @@ The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/servi
 ### Tear Down
 Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with one of:
 ```
-az group delete --name ml1
 az vm delete --name ml1
+az group delete --name ml1
 ```
 
 # In More Detail

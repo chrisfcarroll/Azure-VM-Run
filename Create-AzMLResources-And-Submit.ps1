@@ -62,7 +62,15 @@ Create-AzMLResources-And-Submit.ps1
     [-submit] 
     [-noConfirm]
     [-help | -? ] 
-    [<CommonParameters>]    
+    [<CommonParameters>]
+
+Teardown:
+
+Delete resources with one of:
+```
+az ml workspace delete -w ml1 -g ml1
+az group delete --name ml1
+```
 
 .Link
   README.md : https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart
@@ -137,10 +145,12 @@ Param(
 
   ##Only required when creating a new computetarget. The pre-selected options are vms with a GPU
   ##The Promo sizes may not be available for computetargets
-  [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4')]
-    [string]$computeTargetSize='nc6',
+  [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO',
+              'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4', 'D4S_V3')]
+    [string]$computeTargetSize='NC6',
+
   ##Azure pricing tier is combined with computeTargetSize when specifying a new computetarget
-  [ValidateSet('Free', 'Shared', 'Basic', 'Standard', 'Premium', 'Isolated')][string]$pricingTier="Standard",
+  [ValidateSet('Standard', 'Premium', 'Isolated')][string]$pricingTier="Standard",
 
   ##Used to attach the local folder and to create a runconfig.
   ##Defaults to current directory name
@@ -243,6 +253,27 @@ if($?){
   exit
 }
 
+"Ensure you are logged in"
+$r= (az account show --query "{name:name,state:state}")
+if($?){
+  $doesAccountLookFree= (ConvertFrom-Json ($r -join "")).name -match '^Free|Trial'
+  if($doesAccountLookFree){
+    write-warning "
+    --------------------------------------------------------------------
+    It looks like your account is Free Tier?
+    Only VM sizes with up to 4 vcores and no GPU will be available to to.
+
+    Setting size to D4S_V3.
+    --------------------------------------------------------------------
+    "
+    $computeTargetSize='D4S_V3'
+  }
+  "✅ OK"
+}else{
+  write-warning "You must login first with az login."
+  exit
+}
+
 "Continuing with
    ResourceGroup    : $resourceGroupName $(if($location){"[ location $location ]"})
    Workspace        : $workspaceName 
@@ -251,9 +282,9 @@ if($?){
    Environment?     : $( ($environmentName, $environmentFor) -ne '')
    Dataset?         : $( ($datasetName, $datasetId, $datasetDefinitionFile) -ne '')
    Script?          : $script
+   $(if($noConfirm){'NoConfirm : Create example resources as needed without further confirmation'})
    submit? $(if($submit){'Yes'}else{'No'})
    $(if(-not $attachFolder -and -not (test-path ./azureml)){'[Don''t attach local folder]'})
-   $(if($noConfirm){'[NoConfirm : Create example resources as needed without further confirmation]'})
    "
 
 # ----------------------------------------------------------------------------
@@ -610,7 +641,9 @@ if($datasetId -and $datasetName){
 if($script -and (test-path $script)){
   "Found $script"
   $askScript=$null
+
 }elseif(-not $script){
+
   $askScript="
   You did not specify a script to run.
   Would you like to use an example script which will train on the mnist dataset?"
@@ -622,6 +655,7 @@ if($script -and (test-path $script)){
 
 if($askScript){
   $askScript
+
   if(Ask-YesNo){
     $script= $(switch -regex ($chosenEnvironment){
       "TensorFlow" { "example-train-mnist-tensorflow.py" ; break}
@@ -630,7 +664,7 @@ if($askScript){
       default { "example-training-output-and-log.py" }
     })
     Copy-Item dependencies/$script $script
-    Get-Content $script
+    
   }else{
     write-warning "Halted at 7. Choose a script file because you didn't specify one and didn't want an example one"
     exit
