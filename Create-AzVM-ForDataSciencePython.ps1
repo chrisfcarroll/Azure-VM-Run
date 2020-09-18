@@ -118,9 +118,13 @@ Param(
   ##Image urn to use for the VM
   [string]$imageUrn="microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09",
 
-  ##Hints to upgrade specific python packages before running $commandToRun
-  ##Default to upgrading tensorflow tensorflow-gpu, torch, scikit-learn to current pip versions
-  [string[]]$packagesToUpgrade=@("tensorflow tensorflow-gpu","torch","scikit-learn"),
+  ##The packages that will be specified to create the default (that is, set in .bashrc)
+  ##conda environment on the VM 
+  [string]$condaEnvironmentSpec="tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow",
+
+  ##Packages to pip upgrade after setting up -condaEnvironmentSpec
+  ##Not usually required as you can use -condaEnvironmentSpec instead
+  [string[]]$pipPackagesToUpgrade,
 
   ##Uri of a git repository to clone. The git clone command will be execute from the home 
   ##directory
@@ -135,13 +139,12 @@ Param(
   ## -copyLocalFolder "/this/path/is/asubdirectory"    will be copied to "~/asubdirectory/"
   ## -copyLocalFolder "." will result in all contents of the current working directory
   ##being copied straight into the home directory
-  [ValidateScript({Test-Path $_ -PathType 'Container'})][string]$copyLocalFolder,
+  [ValidateScript({Test-Path $_ -PathType 'Container'})][string]$copyLocalFolder="dependencies",
 
   ##Command to execute after copyLocalFolder (if any) and after cloning gitRepository (if any)
   ##The command will run in a detached tmux session
   ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
-  ##as the command.
-  [string]$commandToRun="python dependencies/hello-world.py",
+  [string]$commandToRun="python --version",
 
   ##Use this switch to check for and retrieve results from an existing VM which
   ##is or has already run a command generating output.
@@ -282,7 +285,7 @@ if($resourceGroupName ){
 # ----------------------------------------------------------------------------
 
 "
-2. Check for existing VM called $name in $resourceGroupName?
+2. Check for existing VM called $name in $resourceGroupName
 "
 $vmIp=(az vm list-ip-addresses -g $resourceGroupName --name $name `
        --query "[].virtualMachine.network.publicIpAddresses[0].ipAddress|[0]" `
@@ -375,32 +378,29 @@ if($isNewlyCreatedVM){
 
   "
   Setting .bashrc to load and run anaconda in non-interactive shells
-  Setting anaconda python to 3.6 ...
   "
   ssh azureuser@$vmIp /data/anaconda/bin/conda init bash
-  ssh azureuser@$vmIp sed -i "'s/\*) return;;/*) ;;#dont return/'" .bashrc    
-  ssh azureuser@$vmIp 'echo "conda activate py36" >> .bashrc'
-  ssh azureuser@$vmIp python --version
-  # fails : ssh azureuser@$vmIp conda update -n base -c defaults conda --yes
-  if($packagesToUpgrade){
-    $commandLine="for p in $($packagesToUpgrade -join " ") ; do pip install `$p --upgrade ; done "
-    ssh azureuser@$vmIp $commandLine
-  }
+  ssh azureuser@$vmIp sed -i "'s/\*) return;;/*) ;;#dont return/'" .bashrc
+  "
+  Creating conda environment for $condaEnvironmentSpec $pipPackagesToUpgrade
+  "
+  ssh azureuser@$vmIp "conda create -n ml $condaEnvironmentSpec --yes"
+  ssh azureuser@$vmIp 'echo "conda activate ml" >> .bashrc'
+  ssh azureuser@$vmIp "python --version && pip install $pipPackagesToUpgrade --upgrade"
 }
 $sshOK=@()
 
 
 if($copyLocalFolder){
-  if($copyLocalFolder -eq '.'){
-    $target=$null
+  if( ($copyLocalFolder -eq ".") -or ($copyLocalFolder -eq $(pwd))){
+    $source="./*"
   }else{
-    $target=(Split-Path $copyLocalFolder -Leaf)
-    ssh azureuser@$vmIp mkdir -p $target
+    $source=$copyLocalFolder
   }
   "
-  5.1 Copying $copyLocalFolder to VM: $target
+  5.1 Copying $source to VM
   "
-  scp -r $copyLocalFolder/* azureuser@$vmIp`:$target
+  scp -r $source azureuser@$vmIp`:
   $sshOK += ,$(if($?){"✅ copyLocalFolder"}else{"❌ copyLocalFolder errored"})
 }
 
@@ -419,22 +419,20 @@ if($commandToRun){
 6. Run command $commandToRun in a tmux session named main ...
 
    Use tmux to create/detach from long running jobs.
-   To detach from a tmux session use the key sequence Ctrl-B d
+   To detach from the tmux session use the key sequence Ctrl-B d
+   To reattach to it, use:
+   > ssh azureuser@$vmIp -t tmux attach -t main
 "
 
   $tmuxbashcommand= "bash -ilc `'$($commandToRun -replace '"','\"' -replace "'","\'")`'"
+  #bash is better: can run multiple commands. $tmuxcommand= $($commandToRun -replace '"','\"' -replace "'","\'")
   ssh azureuser@$vmIp -t tmux new-session -s main $tmuxbashcommand
-  $sshOK += ,$(if($?){"✅ started command"}else{"❌ start command errored"})
-  "
-  VM is ready for you to connect with ssh:
-
-    ssh azureuser@$vmIp
-  "
-}else{
-  "No command specified. VM is ready for you to connect with ssh:
-
-  ssh azureuser@$vmIp 
-  "
+  $sshOK += ,$(if($?){"✅ Ran command."}else{"❌ start command errored"})
 }
-
 $sshOK
+
+"
+VM is ready for you to connect with ssh:
+
+> ssh azureuser@$vmIp
+"
