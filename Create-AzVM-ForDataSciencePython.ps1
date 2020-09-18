@@ -137,6 +137,9 @@ Param(
   ##Whether to answer yes to all confirmation questions
   [Alias('YesToAll')][switch]$noConfirm,
 
+  ##Hints to install specific conda packages
+  [string[]]$condaPackagesToInstall=@("tensorflow=2.2","pytorch=1.4","scikit-learn"),
+
   ##show this help text
   [switch]$help
 )
@@ -256,8 +259,9 @@ if($resourceGroupName ){
 "
 $vmIp=(az vm list-ip-addresses -g $resourceGroupName --name $name `
        --query "[].virtualMachine.network.publicIpAddresses[0].ipAddress|[0]" `
-       ).Trim('"')
+       )
 if($vmIp){
+  $vmIp=$vmIp.Trim('"')
   "Found at $vmIP" ; 
   }else{
     "✅ No such VM exists. Creating a new VM ..."
@@ -348,13 +352,24 @@ if($isNewlyCreatedVM){
   ssh azureuser@$vmIp sed -i "'s/\*) return;;/*) ;;#dont return/'" .bashrc    
   ssh azureuser@$vmIp 'echo "conda activate py36" >> .bashrc'
   ssh azureuser@$vmIp python --version
+  # fails : ssh azureuser@$vmIp conda update -n base -c defaults conda --yes
+  if($condaPackagesToInstall){
+    $versionedNames=($condaPackagesToInstall -join " ")
+    $unversionedNames= ($condaPackagesToInstall | %{ $_.Split("=")[0] } ) -join " "
+    $commandLine="for p in $versionedNames ; do conda install `$p --yes ; done ; conda upgrade $unversionedNames --yes"
+    ssh azureuser@$vmIp $commandLine
+  }
 }
 $sshOK=@()
 
 
 if($copyLocalFolder){
-  $target=(Split-Path $copyLocalFolder -Leaf)
-  ssh azureuser@$vmIp mkdir -p $target
+  if($copyLocalFolder -eq '.'){
+    $target=$null
+  }else{
+    $target=(Split-Path $copyLocalFolder -Leaf)
+    ssh azureuser@$vmIp mkdir -p $target
+  }
   "
   5.1 Copying $copyLocalFolder to VM: $target
   "
@@ -384,15 +399,13 @@ if($commandToRun){
   ssh azureuser@$vmIp -t tmux new-session -s main $tmuxbashcommand
   $sshOK += ,$(if($?){"✅ started command"}else{"❌ start command errored"})
   "
-  VM is ready for you to connect with ssh.
+  VM is ready for you to connect with ssh:
 
-    #Connect to the VM
     ssh azureuser@$vmIp
   "
 }else{
   "No command specified. VM is ready for you to connect with ssh:
 
-  #Connect to the VM
   ssh azureuser@$vmIp 
   "
 }
