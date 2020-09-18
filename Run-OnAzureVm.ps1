@@ -5,7 +5,7 @@
 <#
 .Synopsis
 
-Create-AzVM-ForDataSciencePython.ps1 helps you to:
+Run-OnAzureVm.ps1 helps you to:
   -create a VM preloaded for data science training with a GPU
   -copy files & clone a git repo onto the VM
   -set a commmand running
@@ -61,7 +61,7 @@ az group delete --name ml1
 
 Usage:
 
-Create-AzVM-ForDataSciencePython.ps1 
+Run-OnAzureVm.ps1 
     [[-name] <String>] 
     [-resourceGroupName] <String> [-location <String Valid Azure Location ID e.g. uksouth>] 
     [[-size] <String ValidAzureVMSize>]
@@ -76,7 +76,7 @@ Create-AzVM-ForDataSciencePython.ps1
     [<CommonParameters>]
 
 .Example
-Create-AzVM-ForDataSciencePython.ps1 
+Run-OnAzureVm.ps1 
     -name DSVM 
     -resourceGroupName ml1 -location uksouth
     -size nc6_promo
@@ -86,7 +86,7 @@ Create-AzVM-ForDataSciencePython.ps1
 -creates or confirms a VM with the given name, size and image and with ssh-keys
 
 .Example
-Create-AzVM-ForDataSciencePython.ps1 
+Run-OnAzureVm.ps1 
     -name DSVM 
     -resourceGroupName ml1
     -size standard_nc6_promo

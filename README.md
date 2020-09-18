@@ -10,14 +10,14 @@
 -   Go old-school, and script a VM and send a repo and data to it over ssh
 
 ### OR You Could:
--   Use these two scripts to do either of those two tasks for you in 10 minutes
+-   Use these two scripts to do either of those two tasks for you in 5 minutes
     _and_ help you learn how it all worked at your leisure.
 
 #### *Required:*
 
 1. An [Azure Subscription](https://azure.com) with access to create resources.
-   NB This will work on a Free Tier subscriptions but provisioning will be slow
-   and you won't have any GPU.
+   _NB This will work on a Free Tier subscriptions but provisioning will be slower
+   and you won't have any GPU._
 2. [PowerShell](https://github.com/PowerShell/PowerShell)
 3. Step zero for both options is, [install the az cli, and login](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
@@ -25,7 +25,7 @@
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
-./Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1 -location uksouth `
+./Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth `
         -environmentFor PyTorch `
         -submit `
         -NoConfirm
@@ -37,7 +37,7 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 ### Yes but what about … ?
 The script can take you from the pre-canned example to defining your own datasets, using [other ML frameworks (TensorFlow etc)](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md), specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and more detail.
 ```
-./Create-AzMLResources-And-Submit.ps1 -?
+./Run-OnAzureMLComputeTarget.ps1 -?
 ```
 
 ### Show me the GUI?
@@ -60,13 +60,13 @@ _*Required*_: `ssh` and some basic familiarity with it
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
-./Create-AzVM-ForDataSciencePython.ps1 ml1 ml1 -location uksouth `
+./Run-OnAzureVm.ps1 ml1 ml1 -location uksouth `
         -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials `
         -copyLocalFolder . `
         -commandToRun "python TensorFlow-2.x-Tutorials/11-AE/ex11AutoEncoderMnist.py"  
 ```
 - will create a `Resource Group` and a `Virtual Machine` both named ml1
-- will accept the license for the Data Science Virtual Machine image
+- will accept the license for the Data Science Virtual Machine image 
 - will clone the specified git repo to your home directory on the VM
 - will copy the local folder specified to your home directory on the VM
 - will run the given command
@@ -76,7 +76,7 @@ _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to 
 ### Yes but what about … ?
 The script is intended to be simple. Use your own git repo or local folder, and specify your own `commandToRun`. Call the script with -? to see more options and more detail
 ```
-./Create-AzVM-ForDataSciencePython.ps1 -?
+./Run-OnAzureVm.ps1 -?
 ```
 To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
 The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
@@ -158,7 +158,7 @@ Not covered by this script:
 #### Examples
 
 ```
-Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1
+Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1
   -datasetName mnist 
   -environmentFor TensorFlow 
   -script ./scripts/train.py
@@ -176,7 +176,7 @@ Will do these steps:
 _If you add the -submit flag it will also start the run_
 
 ```
-Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 -location uksouth
+Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 -location uksouth
 ```
 Creates:
   -a resourceGroup named ml1 in Azure location uksouth,

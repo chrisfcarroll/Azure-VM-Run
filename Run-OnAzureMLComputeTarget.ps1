@@ -5,7 +5,7 @@
 <#
 .Synopsis
 
-Create-AzMLResources-And-Submit.ps1 can perform one or all of:
+Run-OnAzureMLComputeTarget.ps1 can perform one or all of:
 
   -create the nested sequence of Azure resources needed to run a script on an Azure ML computetarget 
   -create a runconfig file for the script and the resources
@@ -50,7 +50,7 @@ This Script will Take You Through These Steps
 
 Usage:
 
-Create-AzMLResources-And-Submit.ps1 
+Run-OnAzureMLComputeTarget.ps1 
     [-resourceGroupName] <StringName> [-location <StringAzureLocationId>]
     [-workspaceName] <StringName>
     [-computeTargetName] <StringName> [-computeTargetSize <StringvmSize>] [-pricingTier <String>]
@@ -78,7 +78,7 @@ az group delete --name ml1
     https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md
 
 .Example
-Create-AzMLResources-And-Submit.ps1 ml1 ws1 ct1 -location uksouth
+Run-OnAzureMLComputeTarget.ps1 ml1 ws1 ct1 -location uksouth
 
 -creates or confirms a resourceGroup named ml1 in Azure location uksouth,
 -creates or confirms a workspace named ws1 in that resourceGroup
@@ -88,7 +88,7 @@ Create-AzMLResources-And-Submit.ps1 ml1 ws1 ct1 -location uksouth
 -finally, halts telling you to specify an environment.
 
 .Example
-Create-AzMLResources-And-Submit.ps1 ml1 ws1 ct1 experiment1 -environmentFor TensorFlow
+Run-OnAzureMLComputeTarget.ps1 ml1 ws1 ct1 experiment1 -environmentFor TensorFlow
 
 -confirms a resourceGroup named ml1 exists in your current default location
 -confirms or creates a workspace named ws1 in that resourceGroup
@@ -102,7 +102,7 @@ Create-AzMLResources-And-Submit.ps1 ml1 ws1 ct1 experiment1 -environmentFor Tens
   -shows you the command line to copy to submit a training run
   
 .Example
-Create-AzMLResources-And-Submit.ps1 ml1 ml1 ml1 ml1 `
+Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1 `
         -environmentFor TensorFlow `
         -datasetName mnist `
         -script ./scripts/train.py `
