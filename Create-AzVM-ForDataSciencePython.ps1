@@ -346,7 +346,8 @@ if($isNewlyCreatedVM){
   "
   ssh azureuser@$vmIp /data/anaconda/bin/conda init bash
   ssh azureuser@$vmIp sed -i "'s/\*) return;;/*) ;;#dont return/'" .bashrc    
-  ssh azureuser@$vmIp 'echo "conda activate py36" >> .bashrc'   
+  ssh azureuser@$vmIp 'echo "conda activate py36" >> .bashrc'
+  ssh azureuser@$vmIp python --version
 }
 $sshOK=@()
 
