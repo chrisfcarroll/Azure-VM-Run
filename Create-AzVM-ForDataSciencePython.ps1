@@ -25,11 +25,15 @@ This Script will Take You Through These Steps
 
 2. In the Resource Group, create and start a VM.
 
-3. Choose a Git repository to clone 
+3. Choose a Git repository to clone on the VM
 
-4. Choose local files to transfer
+4. Choose local files to transfer to the VM
 
-5. ssh to the VM
+6. Run a command on the VM, in a tmux session, after first updating any specified python packages
+
+7. ssh to the VM for an interactive session
+
+8. Copy output from the VM back to your local working directory
 
 ----------------------------------------------------------------------------
 Resources Created
@@ -62,9 +66,11 @@ Create-AzVM-ForDataSciencePython.ps1
     [-resourceGroupName] <String> [-location <String Valid Azure Location ID e.g. uksouth>] 
     [[-size] <String ValidAzureVMSize>]
     [[-imageUrn] <String Valid Azure VM Image urn>] 
+    [-packagesToUpgrade <Array of package names to update>] 
     [-gitRepository <Uri to a git repo you want to clone onto the VM>] 
     [-copyLocalFolder <Path to a local folder you want to copy to the VM>] 
-    [-commandToRun <String Commandline to run on the VM>]    
+    [-commandToRun <String Commandline to run on the VM>]
+    [-noConfirm] 
     [-help] 
     [-fetchOutputs  [-fetchOutputFrom <Path default=outputs>]]
     [<CommonParameters>]
@@ -106,39 +112,60 @@ Param(
   [Alias('g')][Parameter(Position=1)][string]$resourceGroupName, 
 
   ##Size of the VM to create
-  [Parameter(Position=2)]
   [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4', 'B1s')]
   [string]$size='NC6_PROMO',
 
   ##Image urn to use for the VM
-  [Parameter(Position=3)][string]$imageUrn="microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09",
+  [string]$imageUrn="microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09",
 
-  ##Uri of git repository to clone 
+  ##Hints to upgrade specific python packages before running $commandToRun
+  ##Default to upgrading tensorflow tensorflow-gpu, torch, scikit-learn to current pip versions
+  [string[]]$packagesToUpgrade=@("tensorflow tensorflow-gpu","torch","scikit-learn"),
+
+  ##Uri of a git repository to clone. The git clone command will be execute from the home 
+  ##directory
   [Uri]$gitRepository,
 
   ##Path of a folder on your local machine to copy to the VM
+  ##If $copyLocalFolder is not simply a subdirectory of the current working folder then
+  ##it will be copied to a folder under the home directory with the same name as the
+  ##last part of the folder's path. 
+  ## eg:
+  ## -copyLocalFolder "/this/path/is/notasubdirectory" will be copied to "~/notasubdirectory/"
+  ## -copyLocalFolder "/this/path/is/asubdirectory"    will be copied to "~/asubdirectory/"
+  ## -copyLocalFolder "." will result in all contents of the current working directory
+  ##being copied straight into the home directory
   [ValidateScript({Test-Path $_ -PathType 'Container'})][string]$copyLocalFolder,
 
   ##Command to execute after copyLocalFolder (if any) and after cloning gitRepository (if any)
   ##The command will run in a detached tmux session
+  ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
+  ##as the command.
   [string]$commandToRun="python dependencies/hello-world.py",
 
-  ##Use this switch to check for and retrieve results from an existing VM.
+  ##Use this switch to check for and retrieve results from an existing VM which
+  ##is or has already run a command generating output.
   ##The contents of directory $fetchOutputsFrom (default: outputs) will be copied
   ##to a local directory of the same name (relative to the current working directory)
   [switch]$fetchOutputs,
 
-  ##When using $fetchOutputs, where to look for outputs.
+  ##When using $fetchOutputs, where to look for outputs. You will want to make sure that
+  ##your script outputs to this directory
+  ##If $fetchOutputsFrom is not simply a subdirectory of the VM's home directory
+  ##it will be copied to a folder under your curernt working directory with the same name as the
+  ##last part of the folder's path. 
+  ## eg:
+  ## -fetchOutputsFrom "/this/path/is/notasubdirectory" will be copied to "./notasubdirectory/"
+  ## -fetchOutputsFrom "/this/path/is/asubdirectory"    will be copied to "./asubdirectory/"
+  ## -fetchOutputsFrom "" will result in _all_ contents of the home directory
+  ##being copied straight into the current working directory.
   [string]$fetchOutputsFrom="outputs",
 
-  #Azure location. Only needed to create a new resourceGroup
+  #Azure location. Only needed if you are creating a new Resource Group
   [string]$location,
 
-  ##Whether to answer yes to all confirmation questions
+  ##Whether to answer yes to all questions and continue without user confirmation
   [Alias('YesToAll')][switch]$noConfirm,
-
-  ##Hints to install specific conda packages
-  [string[]]$condaPackagesToInstall=@("tensorflow=2.2","pytorch=1.4","scikit-learn"),
 
   ##show this help text
   [switch]$help
@@ -284,8 +311,10 @@ elseif($vmIp -and $fetchOutputs)
   "
   Polling for output in $fetchOutputsFrom ...
   "
-  scp -r $vmIp`:$fetchOutputsFrom $fetchOutputsFrom
-  if(Test-Path $fetchOutputsFrom){"Done."}else{"... but nothing copied."}
+  $target=$(if(-not $fetchOutputFrom -or ($fetchOutputFrom -eq ".")){"."}else{Split-Path $fetchOutputsFrom -Leaf})
+  scp -r $vmIp`:$fetchOutputsFrom $target
+  if(-not $target -or (Test-Path $target)){"Done."}else{"... but nothing copied."}
+  exit
 }
 
 # ----------------------------------------------------------------------------
@@ -353,10 +382,8 @@ if($isNewlyCreatedVM){
   ssh azureuser@$vmIp 'echo "conda activate py36" >> .bashrc'
   ssh azureuser@$vmIp python --version
   # fails : ssh azureuser@$vmIp conda update -n base -c defaults conda --yes
-  if($condaPackagesToInstall){
-    $versionedNames=($condaPackagesToInstall -join " ")
-    $unversionedNames= ($condaPackagesToInstall | %{ $_.Split("=")[0] } ) -join " "
-    $commandLine="for p in $versionedNames ; do conda install `$p --yes ; done ; conda upgrade $unversionedNames --yes"
+  if($packagesToUpgrade){
+    $commandLine="for p in $($packagesToUpgrade -join " ") ; do pip install `$p --upgrade ; done "
     ssh azureuser@$vmIp $commandLine
   }
 }
