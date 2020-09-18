@@ -1,5 +1,5 @@
 # `az ml` Quickstart
-## Create Azure machine learning resources and submit a training script, from scratch, in 10 minutes
+## Create Azure machine learning resources and run scripts, from scratch, in 10 minutes
 
 ### Q: How can I *script* training runs to run on GPU-enabled computing on Azure?
 
@@ -7,7 +7,7 @@
 
 -   Use `az ml run submit-script` and learn about the sequence of 8
     (yes, eight) resources & files you will need to create before it works
--   Go old-school, and script a VM and send a repo and data to it over ssh
+-   Go old-school, create a VM, and send a repo and data to it over ssh
 
 ### OR You Could:
 -   Use these two scripts to do either of those two tasks for you in 5 minutes
