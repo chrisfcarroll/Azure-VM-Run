@@ -5,7 +5,7 @@
 <#
 .Synopsis
 
-Run-OnAzureVm.ps1 helps you to:
+Run-OnAzureVM.ps1 helps you to:
   -create a VM preloaded for data science training with a GPU
   -copy files & clone a git repo onto the VM
   -set a commmand running
@@ -61,7 +61,7 @@ az group delete --name ml1
 
 Usage:
 
-Run-OnAzureVm.ps1 
+Run-OnAzureVM.ps1 
     [[-name] <String>] 
     [-resourceGroupName] <String> [-location <String Valid Azure Location ID e.g. uksouth>] 
     [[-size] <String ValidAzureVMSize>]
@@ -76,7 +76,7 @@ Run-OnAzureVm.ps1
     [<CommonParameters>]
 
 .Example
-Run-OnAzureVm.ps1 
+Run-OnAzureVM.ps1 
     -name DSVM 
     -resourceGroupName ml1 -location uksouth
     -size nc6_promo
@@ -86,7 +86,7 @@ Run-OnAzureVm.ps1
 -creates or confirms a VM with the given name, size and image and with ssh-keys
 
 .Example
-Run-OnAzureVm.ps1 
+Run-OnAzureVM.ps1 
     -name DSVM 
     -resourceGroupName ml1
     -size standard_nc6_promo

@@ -60,7 +60,7 @@ _*Required*_: `ssh` and some basic familiarity with it
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
-./Run-OnAzureVm.ps1 ml1 ml1 -location uksouth `
+./Run-OnAzureVM.ps1 ml1 ml1 -location uksouth `
         -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials `
         -copyLocalFolder . `
         -commandToRun "python TensorFlow-2.x-Tutorials/11-AE/ex11AutoEncoderMnist.py"  
@@ -76,7 +76,7 @@ _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to 
 ### Yes but what about … ?
 The script is intended to be simple. Use your own git repo or local folder, and specify your own `commandToRun`. Call the script with -? to see more options and more detail
 ```
-./Run-OnAzureVm.ps1 -?
+./Run-OnAzureVM.ps1 -?
 ```
 To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
 The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
