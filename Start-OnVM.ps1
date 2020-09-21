@@ -5,8 +5,15 @@
 <#
 .Synopsis
 
-Run-OnAzureVM.ps1 helps you to:
-  -create a VM preloaded for data science training with a GPU
+Start-OnVM.ps1 runs a local command on an Azure VM in the cloud. 
+
+By default it will
+  -first find or create the VM and a Azure resource group to hold it.
+  -use the cheapest Azure hardware with a GPU, namely NC6_PROMO 
+  -use an Ubuntu DSVM image published by Microsoft, preloaded for data science and ML training
+  -accept the license for the VM
+
+It can also 
   -copy files & clone a git repo onto the VM
   -set a commmand running
   -check for and retrieve outputs
@@ -18,7 +25,7 @@ More detail : https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart
 This Script will Take You Through These Steps
 ---------------------------------------------
 
-[Step zero] Install az cli tool & ml extensions. Be able to access your account
+[Step zero] Install az cli tool is installed. Be able to access your account.
 
 1. Create a Resource Group. This is Azure's way to 'keep together' related
    resources. It is tied to an azure location and is free.
@@ -53,82 +60,79 @@ Teardown:
 
 Delete resources with one of:
 ```
-az vm delete --name ml1
-az group delete --name ml1
+az vm delete --name DSVM
+az group delete --name DSVM
 ```
 
 ----------------------------------------------------------------------------
 
 Usage:
 
-Run-OnAzureVM.ps1 
-    [[-name] <String>] 
-    [-resourceGroupName] <String> [-location <String Valid Azure Location ID e.g. uksouth>] 
-    [[-size] <String ValidAzureVMSize>]
-    [[-imageUrn] <String Valid Azure VM Image urn>] 
-    [-packagesToUpgrade <Array of package names to update>] 
-    [-gitRepository <Uri to a git repo you want to clone onto the VM>] 
-    [-copyLocalFolder <Path to a local folder you want to copy to the VM>] 
-    [-commandToRun <String Commandline to run on the VM>]
+Start-OnVM.ps1 
+    [[-commandToRun] <Path Commandline to run on the VM>] 
+    [[-copyLocalFolder] <Path to a local folder you want to copy to the VM>] 
+    [[-gitRepository] <Uri to a git repo you want to clone onto the VM>] 
+    [-fetchOutputs] [-fetchOutputsFrom <Path default=outputs>] 
+    [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
+    [-resourceGroupName <String>] [-location <String Valid Azure Location ID e.g. uksouth>] 
+    [-imageUrn <String>] 
+    [-vmName <String>] [-vmSize <String>] 
     [-noConfirm] 
     [-help] 
-    [-fetchOutputs  [-fetchOutputFrom <Path default=outputs>]]
     [<CommonParameters>]
 
 .Example
-Run-OnAzureVM.ps1 
-    -name DSVM 
-    -resourceGroupName ml1 -location uksouth
-    -size nc6_promo
-    -image-urn microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+Start-OnVM.ps1 
+    "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py"
+    -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials
+    -resourceGroupName DSVM -location uksouth
 
--creates or confirms a resourceGroup named ml1 in Azure location uksouth
--creates or confirms a VM with the given name, size and image and with ssh-keys
+-First creates or confirms the Azure resources required:
+  -creates or confirms a resourceGroup named DSVM in Azure location uksouth
+  -creates or confirms a VM name DSVM
+    - with default size : NC6_PROMO
+    - with default image : microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+  -accepts the license for the image
+-Then prepares the VM:
+  - creates a conda/python environment with default spec: python 3.7.x tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow
+  - clones the given git repo into the path ~/TensorFlow-2.x-Tutorials
+-Runs the given command:
+  "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py" in a detached tmux session
 
 .Example
-Run-OnAzureVM.ps1 
-    -name DSVM 
-    -resourceGroupName ml1
-    -size standard_nc6_promo
-    -image-urn microsoft-ads:linux-data-science-vm:linuxdsvm:20.08.06
-    -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials
-    -copyLocalFolder my-project
-    -commandToRun "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py"
+Start-OnVM.ps1 
+    -vmName MyOtherVMName 
+    -resourceGroupName MyRGName -location uksouth
+    -vmSize NC24_PROMO
+    -image-urn microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+    -condaEnvironmentSpec "python 3.8 pytorch=1.5 matplotlib pillow"
 
--confirms a resourceGroup named ml1
--creates or confirms a VM with the given name, size and image and with ssh-keys
--clones the given git repo into the path ~/TensorFlow-2.x-Tutorials
--copies local Folder tf-wip into the path ~/my-project
--runs the command "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py" in a detached tmux session
+-First creates or confirms the Azure resources required:
+  -creates or confirms a resourceGroup named MyRGName in Azure location uksouth
+  -creates or confirms a VM name MyOtherVMName
+    - with size : NC24_PROMO
+    - with image : microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+  -accepts the license for the image
+-Then prepares the VM:
+  - creates a conda/python environment with the initial spec given
+
+And finishes. This can be used to 'warm-start' a VM. 
+My experience has typically been that it takes a few minutes to start the first VM of the day
+
+.Example
+Start-OnVM.ps1 -fetchOutputFrom TensorFlow-2.x-Tutorials/11-AE/
+
+-attempts to find and connect to a running VM with the default name, DSVM, 
+-copies the remote directory ~/TensorFlow-2.x-Tutorials/11-AE/ to a local directory 
+ called 11-AE in your current working directory.
 
 #>
 [CmdletBinding(PositionalBinding=$false)]
 Param(
-  #Required. Name of the VM to create or confirm
-  [Parameter(Position=0)][string]$name='DSVM',
-
-  ##Required. A new or existing Azure ResourceGroup name.
-  ##https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal
-  [Alias('g')][Parameter(Position=1)][string]$resourceGroupName, 
-
-  ##Size of the VM to create
-  [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4', 'B1s')]
-  [string]$size='NC6_PROMO',
-
-  ##Image urn to use for the VM
-  [string]$imageUrn="microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09",
-
-  ##The packages that will be specified to create the default (that is, set in .bashrc)
-  ##conda environment on the VM 
-  [string]$condaEnvironmentSpec="tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow",
-
-  ##Packages to pip upgrade after setting up -condaEnvironmentSpec
-  ##Not usually required as you can use -condaEnvironmentSpec instead
-  [string[]]$pipPackagesToUpgrade,
-
-  ##Uri of a git repository to clone. The git clone command will be execute from the home 
-  ##directory
-  [Uri]$gitRepository,
+  ##Command to execute after copyLocalFolder (if any) and after cloning gitRepository (if any)
+  ##The command will run in a detached tmux session
+  ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
+  [Parameter(Position=0)][string]$commandToRun="python --version",
 
   ##Path of a folder on your local machine to copy to the VM
   ##If $copyLocalFolder is not simply a subdirectory of the current working folder then
@@ -139,23 +143,22 @@ Param(
   ## -copyLocalFolder "/this/path/is/asubdirectory"    will be copied to "~/asubdirectory/"
   ## -copyLocalFolder "." will result in all contents of the current working directory
   ##being copied straight into the home directory
-  [ValidateScript({Test-Path $_ -PathType 'Container'})][string]$copyLocalFolder="dependencies",
+  [Parameter(Position=1)][ValidateScript({Test-Path $_ -PathType 'Container'})][string]$copyLocalFolder,
 
-  ##Command to execute after copyLocalFolder (if any) and after cloning gitRepository (if any)
-  ##The command will run in a detached tmux session
-  ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
-  [string]$commandToRun="python --version",
+  ##Uri of a git repository to clone. The git clone command will be execute from the home 
+  ##directory
+  [Parameter(Position=2)][Uri]$gitRepository,
 
-  ##Use this switch to check for and retrieve results from an existing VM which
-  ##is or has already run a command generating output.
+  ##Use this switch after starting a command on a VM to check for and retrieve results.
   ##The contents of directory $fetchOutputsFrom (default: outputs) will be copied
   ##to a local directory of the same name (relative to the current working directory)
   [switch]$fetchOutputs,
 
-  ##When using $fetchOutputs, where to look for outputs. You will want to make sure that
-  ##your script outputs to this directory
-  ##If $fetchOutputsFrom is not simply a subdirectory of the VM's home directory
-  ##it will be copied to a folder under your curernt working directory with the same name as the
+  ##When using $fetchOutputs, where to look for outputs. 
+  ##Use this with the switch -fetchOutputs after starting a command on a VM.
+  ##You will want to make sure that your script outputs to this directory
+  ##If $fetchOutputsFrom is not anm immediate child subdirectory of the VM's home directory,
+  ##then it will be copied to a folder under your current working directory with the same name as the
   ##last part of the folder's path. 
   ## eg:
   ## -fetchOutputsFrom "/this/path/is/notasubdirectory" will be copied to "./notasubdirectory/"
@@ -164,11 +167,37 @@ Param(
   ##being copied straight into the current working directory.
   [string]$fetchOutputsFrom="outputs",
 
+  ##The packages that will be uncluded in the default (that is, set in .bashrc)
+  ##conda environment on the VM. Default to common machine learning packages
+  [string]$condaEnvironmentSpec="tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow",
+
+  ##Packages to pip upgrade after setting up -condaEnvironmentSpec
+  ##Use this only if you cannot get your required setup with -condaEnvironmentSpec
+  [string[]]$pipPackagesToUpgrade,
+
+  ##Required. A new or existing Azure ResourceGroup name.
+  ##https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal
+  [Alias('g')][string]$resourceGroupName, 
+
   #Azure location. Only needed if you are creating a new Resource Group
   [string]$location,
 
+  ##Image urn to use for the VM
+  [string]$imageUrn="microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09",
+
+
+  #Required. Name of the VM to create or confirm
+  [string]$vmName='DSVM',
+
+  ##Size of the VM to create
+  [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4', 'B1s')]
+  [string]$vmSize='NC6_PROMO',
+
   ##Whether to answer yes to all questions and continue without user confirmation
   [Alias('YesToAll')][switch]$noConfirm,
+
+  ##Use this switch to avoid repeated accepting the image license
+  [switch]$licensedAlreadyAccepted,
 
   ##show this help text
   [switch]$help
@@ -180,7 +209,7 @@ function Ask-YesElseThrow($msg){
 }
 
 # ----------------------------------------------------------------------------
-if(-not $name -or (-not $resourceGroupName -and -not $fetchOutputs) -or $help)
+if(-not $vmName -or (-not $resourceGroupName -and -not $fetchOutputs) -or $help)
 {
   if(get-command less){Get-Help $PSCommandPath -Full | less}
   elseif(get-command more){Get-Help $PSCommandPath -Full | more}
@@ -202,16 +231,8 @@ if($azcli){
         >az login 
         to confirm you can connect to your subscription."
 }
-" Ensure the ml extension is installed?"
-az extension add -n azure-cli-ml
-if($?){
-  "✅ az ml extension installed"
-}else{
-  Start-Process "https://www.bing.com/search?q=az+cli+install+extension+ml+failed"
-  throw "Failed when adding extension azure-cli-ml. Not sure where to go from here."
-}
 
-"Ensure you are logged in"
+"Ensure you are logged in?"
 $r= (az account show --query "{name:name,state:state}")
 if($?){
   $doesAccountLookFree= (ConvertFrom-Json ($r -join "")).name -match '^Free|Trial'
@@ -221,14 +242,14 @@ if($?){
     It looks like your account is Free Tier?
     Standard_B1s will be the only VM size available to you.
     
-    Note that e.g. the TensorFlow build on the linux-data-science-vm
-    expects a GPU which you won't have. To use the DSVM on Free Trial
-    you will have to manually install non-GPU builds
+    Note that some package on the linux-data-science-vm
+    expect a GPU which you won't have. To use the DSVM on Free Trial
+    you may have to specify non-GPU built packages
 
     Setting size to B1s.
     --------------------------------------------------------------------
     "
-    $size='B1s'
+    $vmSize='B1s'
   }
   "✅ OK"
 }else{
@@ -263,7 +284,11 @@ if($resourceGroupName ){
 
     $commandName $resourceGroupName $workspaceName -location uksouth
 
-    Halted at step 1. Choose or Create a ResourceGroup.
+    Halted at step 1. Choose or Create a ResourceGroup. 
+
+    If you are not familiar with Azure, try 
+    https://www.bing.com/search?q=choose+an+azure+location+near+me+site:microsoft.com
+    for a suitable location name.
     "
     exit
   }
@@ -273,21 +298,24 @@ if($resourceGroupName ){
   "
   az group list --output table
   "
-  Use an existing group by specifying -resourceGroupName, or else specify 
+  Use an existing group by specifying -resourceGroupName , or else specify 
   both -resourceGroupName and -location to create a new ResourceGroup.
-  (ResourceGroups are free).
+  ResourceGroups are free.
+  An abbrevation for -resourceGroupName is -g
 
   "
-  write-warning "Halted at step 1. Choose or Create a ResourceGroup.
+  write-warning "Halted at step 1. You must choose or create a ResourceGroup.
+  You can't create a VM with specifying a resource group for it to belong too.
+  If this is your first experience with Azure, you might simply call it ‘VM’
   "
   exit
 }
 # ----------------------------------------------------------------------------
 
 "
-2. Check for existing VM called $name in $resourceGroupName
+2. Check for existing VM called $vmName in $resourceGroupName
 "
-$vmIp=(az vm list-ip-addresses -g $resourceGroupName --name $name `
+$vmIp=(az vm list-ip-addresses -g $resourceGroupName --name $vmName `
        --query "[].virtualMachine.network.publicIpAddresses[0].ipAddress|[0]" `
        )
 if($vmIp){
@@ -300,7 +328,13 @@ if($vmIp){
 
 #-----------------------------------------------------------------------------
 
-if(-not $vmIp){
+if($vmIp){
+
+  "A VM called $vmName already exists."
+
+}elseif($licensedAlreadyAccepted){
+  "Skipping accept image license because you said the license is already accepted."
+}else{
   "
   3. Accepting the license for --image $imageUrn ... 
   "
@@ -309,53 +343,36 @@ if(-not $vmIp){
   if($?){"✅ OK"}  
 
 }
-elseif($vmIp -and $fetchOutputs)
-{
-  "
-  Polling for output in $fetchOutputsFrom ...
-  "
-  $target=$(if(-not $fetchOutputFrom -or ($fetchOutputFrom -eq ".")){"."}else{Split-Path $fetchOutputsFrom -Leaf})
-  scp -r $vmIp`:$fetchOutputsFrom $target
-  if(-not $target -or (Test-Path $target)){"Done."}else{"... but nothing copied."}
-  exit
-}
 
 # ----------------------------------------------------------------------------
 
 if(-not $vmIp){
   "
-  4. Create VM --name $name 
+  4. Create VM --name $vmName 
                --resource-group $resourceGroupName 
                --admin-username azureuser 
-               --size Standard_$size 
+               --size Standard_$vmSize 
                --image $imageUrn
                --generate-ssh-keys
 
   "
 
-  if($vmIp){
+  $isNewlyCreatedVM=$true
+  $result=(az vm create -g $resourceGroupName --admin-username azureuser --name $vmName --image $imageUrn --generate-ssh-keys --size Standard_$vmSize)
+  $ok=$?
+  if(-not $ok){
+    write-warning "$ok $result"
+    write-warning "
+    Stopping because the command
 
-    write-warning "A VM called $name already exists. Skipping creation."
+    >az vm create -g $resourceGroupName --name $vmName --admin-username azureuser --image $imageUrn --generate-ssh-keys --size Standard_$vmSize
 
-  }else{
-
-    $isNewlyCreatedVM=$true
-    $result=(az vm create -g $resourceGroupName --admin-username azureuser --name $name --image $imageUrn --generate-ssh-keys --size Standard_$size)
-    $ok=$?
-    if(-not $ok){
-      write-warning "$ok $result"
-      write-warning "
-      Stopping because the command
-
-      >az vm create -g $resourceGroupName --name $name --admin-username azureuser --image $imageUrn --generate-ssh-keys --size Standard_$size
-
-      failed.
-      "
-      exit
-    }
-
-    $vmIp= (ConvertFrom-Json ($result -join " ") -NoEnumerate -AsHashtable).publicIpAddress
+    failed.
+    "
+    exit
   }
+
+  $vmIp= (ConvertFrom-Json ($result -join " ") -NoEnumerate -AsHashtable).publicIpAddress
 
   if($?){"✅ OK"}  
 }
@@ -384,9 +401,11 @@ if($isNewlyCreatedVM){
   "
   Creating conda environment for $condaEnvironmentSpec $pipPackagesToUpgrade
   "
-  ssh azureuser@$vmIp "conda create -n ml $condaEnvironmentSpec --yes"
-  ssh azureuser@$vmIp 'echo "conda activate ml" >> .bashrc'
-  ssh azureuser@$vmIp "python --version && pip install $pipPackagesToUpgrade --upgrade"
+  ssh azureuser@$vmIp "conda create -n vm $condaEnvironmentSpec --yes"
+  ssh azureuser@$vmIp 'echo "conda activate vm" >> .bashrc'
+  if($pipPackagesToUpgrade){
+    ssh azureuser@$vmIp "python --version && python -m pip install $pipPackagesToUpgrade --upgrade"
+  }
 }
 $sshOK=@()
 
@@ -436,3 +455,28 @@ VM is ready for you to connect with ssh:
 
 > ssh azureuser@$vmIp
 "
+
+
+# --------------------------------------------------------------------------
+$fetchOutputs=$fetchOutputs -or $fetchOutputFrom
+
+if($fetchOutputFrom -or -not $fetchOutputs){
+  #ok
+}elseif($copyLocalFolder){
+  $fetchOutputFrom=$copyLocalFolder
+}elseif($gitRepository){
+  $fetchOutputFrom=(Split-Path $gitRepository.AbsolutePath -Leaf)
+}else{
+  $fetchOutputFrom="."
+}
+
+if($vmIp -and $fetchOutputs)
+{
+  "
+  Polling for output in $fetchOutputsFrom ...
+  "
+  $target=$(if(-not $fetchOutputFrom -or ($fetchOutputFrom -eq ".")){"."}else{Split-Path $fetchOutputsFrom -Leaf})
+  scp -r $vmIp`:$fetchOutputsFrom $target
+  if(-not $target -or (Test-Path $target)){"Done."}else{"... but nothing copied."}
+  exit
+}

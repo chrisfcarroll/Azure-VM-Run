@@ -25,7 +25,7 @@
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
-./Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth `
+./Start-OnComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth `
         -environmentFor PyTorch `
         -submit `
         -NoConfirm
@@ -37,7 +37,7 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 ### Yes but what about … ?
 The script can take you from the pre-canned example to defining your own datasets, using [other ML frameworks (TensorFlow etc)](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md), specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and more detail.
 ```
-./Run-OnAzureMLComputeTarget.ps1 -?
+./Start-OnComputeTarget.ps1 -?
 ```
 
 ### Show me the GUI?
@@ -60,7 +60,7 @@ _*Required*_: `ssh` and some basic familiarity with it
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
-./Run-OnAzureVM.ps1 ml1 ml1 -location uksouth `
+./Start-OnVM.ps1 ml1 ml1 -location uksouth `
         -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials `
         -copyLocalFolder . `
         -commandToRun "python TensorFlow-2.x-Tutorials/11-AE/ex11AutoEncoderMnist.py"  
@@ -76,7 +76,7 @@ _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to 
 ### Yes but what about … ?
 The script is intended to be simple. Use your own git repo or local folder, and specify your own `commandToRun`. Call the script with -? to see more options and more detail
 ```
-./Run-OnAzureVM.ps1 -?
+./Start-OnVM.ps1 -?
 ```
 To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
 The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
@@ -158,7 +158,7 @@ Not covered by this script:
 #### Examples
 
 ```
-Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1
+Start-OnComputeTarget.ps1 ml1 ml1 ml1 ml1
   -datasetName mnist 
   -environmentFor TensorFlow 
   -script ./scripts/train.py
@@ -176,7 +176,7 @@ Will do these steps:
 _If you add the -submit flag it will also start the run_
 
 ```
-Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 -location uksouth
+Start-OnComputeTarget.ps1 ml1 ml1 ml1 -location uksouth
 ```
 Creates:
   -a resourceGroup named ml1 in Azure location uksouth,

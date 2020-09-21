@@ -11,14 +11,14 @@ az login
 
 and then try out the example command line:
 
-./Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth \`
+./Start-OnComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth \`
         -environmentFor PyTorch  \`
         -submit \`
         -NoConfirm
 
 and/or
 
-./Run-OnAzureMLComputeTarget.ps1 -? | less
+./Start-OnComputeTarget.ps1 -? | less
 -----------------------------------------------------------------------
 "
 docker run --rm -it -v $(pwd):/opt/az-ml-qs az pwsh -interactive -NoExit -command "cd /opt/az-ml-qs"
