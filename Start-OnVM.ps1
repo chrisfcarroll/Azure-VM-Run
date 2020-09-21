@@ -72,7 +72,7 @@ Start-OnVM.ps1
     [[-commandToRun] <Path Commandline to run on the VM>] 
     [[-copyLocalFolder] <Path to a local folder you want to copy to the VM>] 
     [[-gitRepository] <Uri to a git repo you want to clone onto the VM>] 
-    [-fetchOutputs] [-fetchOutputsFrom <Path default=outputs>] 
+    [-fetchOutputFrom <Path>] 
     [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
     [-resourceGroupName <String>] [-location <String Valid Azure Location ID e.g. uksouth>] 
     [-imageUrn <String>] 
@@ -132,7 +132,7 @@ Param(
   ##Command to execute after copyLocalFolder (if any) and after cloning gitRepository (if any)
   ##The command will run in a detached tmux session
   ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
-  [Parameter(Position=0)][string]$commandToRun="python --version",
+  [Parameter(Position=0)][string]$commandToRun,
 
   ##Path of a folder on your local machine to copy to the VM
   ##If $copyLocalFolder is not simply a subdirectory of the current working folder then
@@ -149,23 +149,17 @@ Param(
   ##directory
   [Parameter(Position=2)][Uri]$gitRepository,
 
-  ##Use this switch after starting a command on a VM to check for and retrieve results.
-  ##The contents of directory $fetchOutputsFrom (default: outputs) will be copied
-  ##to a local directory of the same name (relative to the current working directory)
-  [switch]$fetchOutputs,
-
-  ##When using $fetchOutputs, where to look for outputs. 
-  ##Use this with the switch -fetchOutputs after starting a command on a VM.
+  ##Use this after starting a command on a VM to check for and retrieve results.
   ##You will want to make sure that your script outputs to this directory
-  ##If $fetchOutputsFrom is not anm immediate child subdirectory of the VM's home directory,
+  ##If -fetchOutputFrom is not an immediate child subdirectory of the VM's home directory,
   ##then it will be copied to a folder under your current working directory with the same name as the
   ##last part of the folder's path. 
   ## eg:
-  ## -fetchOutputsFrom "/this/path/is/notasubdirectory" will be copied to "./notasubdirectory/"
-  ## -fetchOutputsFrom "/this/path/is/asubdirectory"    will be copied to "./asubdirectory/"
-  ## -fetchOutputsFrom "" will result in _all_ contents of the home directory
+  ## -fetchOutputFrom "/this/path/is/notasubdirectory" will be copied to "./notasubdirectory/"
+  ## -fetchOutputFrom "/this/path/is/asubdirectory"    will be copied to "./asubdirectory/"
+  ## -fetchOutputFrom "" will result in _all_ contents of the home directory
   ##being copied straight into the current working directory.
-  [string]$fetchOutputsFrom="outputs",
+  [string]$fetchOutputFrom,
 
   ##The packages that will be uncluded in the default (that is, set in .bashrc)
   ##conda environment on the VM. Default to common machine learning packages
@@ -209,7 +203,7 @@ function Ask-YesElseThrow($msg){
 }
 
 # ----------------------------------------------------------------------------
-if(-not $vmName -or (-not $resourceGroupName -and -not $fetchOutputs) -or $help)
+if(-not $vmName -or (-not $resourceGroupName -and -not $fetchOutputFrom) -or $help)
 {
   if(get-command less){Get-Help $PSCommandPath -Full | less}
   elseif(get-command more){Get-Help $PSCommandPath -Full | more}
@@ -458,25 +452,13 @@ VM is ready for you to connect with ssh:
 
 
 # --------------------------------------------------------------------------
-$fetchOutputs=$fetchOutputs -or $fetchOutputFrom
-
-if($fetchOutputFrom -or -not $fetchOutputs){
-  #ok
-}elseif($copyLocalFolder){
-  $fetchOutputFrom=$copyLocalFolder
-}elseif($gitRepository){
-  $fetchOutputFrom=(Split-Path $gitRepository.AbsolutePath -Leaf)
-}else{
-  $fetchOutputFrom="."
-}
-
-if($vmIp -and $fetchOutputs)
+if($vmIp -and $fetchOutputFrom)
 {
   "
-  Polling for output in $fetchOutputsFrom ...
+  Polling for output in $fetchOutputFrom ...
   "
-  $target=$(if(-not $fetchOutputFrom -or ($fetchOutputFrom -eq ".")){"."}else{Split-Path $fetchOutputsFrom -Leaf})
-  scp -r $vmIp`:$fetchOutputsFrom $target
+  "scp -r $vmIp`:$fetchOutputFrom $target ..."
+  scp -r azureuser@$vmIp`:$fetchOutputFrom .
   if(-not $target -or (Test-Path $target)){"Done."}else{"... but nothing copied."}
   exit
 }
