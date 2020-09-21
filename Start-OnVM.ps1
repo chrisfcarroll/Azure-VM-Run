@@ -163,7 +163,7 @@ Param(
 
   ##The packages that will be uncluded in the default (that is, set in .bashrc)
   ##conda environment on the VM. Default to common machine learning packages
-  [string]$condaEnvironmentSpec="tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow",
+  [string]$condaEnvironmentSpec="tensorflow-gpu=2.2 pytorch=1.5 scikit-learn matplotlib pillow",
 
   ##Packages to pip upgrade after setting up -condaEnvironmentSpec
   ##Use this only if you cannot get your required setup with -condaEnvironmentSpec
