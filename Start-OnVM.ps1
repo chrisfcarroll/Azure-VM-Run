@@ -70,7 +70,7 @@ Usage:
 
 Start-OnVM.ps1 
     [[-commandToRun] <Path Commandline to run on the VM>] 
-    [[-copyLocalFolder] <Path to a local folder you want to copy to the VM>] 
+    [[-copyFromLocal] <Path to a local folder you want to copy to the VM>] 
     [[-gitRepository] <Uri to a git repo you want to clone onto the VM>] 
     [-fetchOutputFrom <Path>] 
     [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
@@ -129,21 +129,21 @@ Start-OnVM.ps1 -fetchOutputFrom TensorFlow-2.x-Tutorials/11-AE/
 #>
 [CmdletBinding(PositionalBinding=$false)]
 Param(
-  ##Command to execute after copyLocalFolder (if any) and after cloning gitRepository (if any)
+  ##Command to execute after copyFromLocal (if any) and after cloning gitRepository (if any)
   ##The command will run in a detached tmux session
   ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
   [Parameter(Position=0)][string]$commandToRun,
 
-  ##Path of a folder on your local machine to copy to the VM
-  ##If $copyLocalFolder is not simply a subdirectory of the current working folder then
+  ##Path of a folder or files on your local machine to copy to the VM
+  ##If $copyFromLocal is not simply a subdirectory of the current working folder then
   ##it will be copied to a folder under the home directory with the same name as the
   ##last part of the folder's path. 
   ## eg:
-  ## -copyLocalFolder "/this/path/is/notasubdirectory" will be copied to "~/notasubdirectory/"
-  ## -copyLocalFolder "/this/path/is/asubdirectory"    will be copied to "~/asubdirectory/"
-  ## -copyLocalFolder "." will result in all contents of the current working directory
+  ## -copyFromLocal "/this/path/is/notasubdirectory" will be copied to "~/notasubdirectory/"
+  ## -copyFromLocal "/this/path/is/asubdirectory"    will be copied to "~/asubdirectory/"
+  ## -copyFromLocal "." will result in all contents of the current working directory
   ##being copied straight into the home directory
-  [Parameter(Position=1)][ValidateScript({Test-Path $_ -PathType 'Container'})][string]$copyLocalFolder,
+  [Parameter(Position=1)][ValidateScript({Test-Path $_ })][string]$copyFromLocal,
 
   ##Uri of a git repository to clone. The git clone command will be execute from the home 
   ##directory
@@ -404,17 +404,17 @@ if($isNewlyCreatedVM){
 $sshOK=@()
 
 
-if($copyLocalFolder){
-  if( ($copyLocalFolder -eq ".") -or ($copyLocalFolder -eq $(pwd))){
+if($copyFromLocal){
+  if( ($copyFromLocal -eq ".") -or ($copyFromLocal -eq $(pwd))){
     $source="./*"
   }else{
-    $source=$copyLocalFolder
+    $source=$copyFromLocal
   }
   "
   5.1 Copying $source to VM
   "
   scp -r $source azureuser@$vmIp`:
-  $sshOK += ,$(if($?){"✅ copyLocalFolder"}else{"❌ copyLocalFolder errored"})
+  $sshOK += ,$(if($?){"✅ copyFromLocal"}else{"❌ copyFromLocal errored"})
 }
 
 if($gitRepository){
