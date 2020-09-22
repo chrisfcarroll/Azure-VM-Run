@@ -7,3 +7,4 @@ runoutput*.json
 outputs/
 **/*.sublime-workspace
 example-*
+.vscode/

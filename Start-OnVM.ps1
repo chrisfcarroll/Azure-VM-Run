@@ -5,7 +5,7 @@
 <#
 .Synopsis
 
-Start-OnVM.ps1 runs a local command on an Azure VM in the cloud. 
+Start-OnVM.ps1 runs a local command on an Azure VM.
 
 By default it will
   -first find or create the VM and a Azure resource group to hold it.
@@ -13,12 +13,30 @@ By default it will
   -use an Ubuntu DSVM image published by Microsoft, preloaded for data science and ML training
   -accept the license for the VM
 
-It can also 
-  -copy files & clone a git repo onto the VM
+It can then 
+  -copy files to the VM
+  -clone a git repo on the VM
   -set a commmand running
-  -check for and retrieve outputs
+  -copy directories from the VM back to your machine
 
 More detail : https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart
+
+Usage:
+
+Start-OnVM.ps1 [[-commandToRun] <String command and args> ]
+  [[-copyFromLocal] <Local path> | -noCopy] 
+  [-fetchOutput <Path>]
+  [-recursive] 
+  [[-gitRepository] <Uri to a git repo you want to clone onto the VM>]  
+  [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
+  [-resourceGroupName <String> [-location <Azure Location ID e.g. uksouth>]]
+  [-imageUrn <String>] 
+  [-vmName <String>] [-vmSize <String>] 
+  [-licensedAlreadyAccepted]
+  [-noConfirm] 
+  [-help]
+  [<CommonParameters>]
+
 
 .Description
 
@@ -66,38 +84,41 @@ az group delete --name DSVM
 
 ----------------------------------------------------------------------------
 
-Usage:
-
-Start-OnVM.ps1 
-    [[-commandToRun] <Path Commandline to run on the VM>] 
-    [[-copyFromLocal] <Path to a local folder you want to copy to the VM>] 
-    [[-gitRepository] <Uri to a git repo you want to clone onto the VM>] 
-    [-fetchOutputFrom <Path>] 
-    [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
-    [-resourceGroupName <String>] [-location <String Valid Azure Location ID e.g. uksouth>] 
-    [-imageUrn <String>] 
-    [-vmName <String>] [-vmSize <String>] 
-    [-noConfirm] 
-    [-help] 
-    [<CommonParameters>]
+.Example
+Start-OnVM.ps1 "python main.py" -copy . fetch . -g VM -location uksouth
+-First creates or confirms the Azure resources required:
+  -creates or confirms a resourceGroup named VM in Azure location uksouth
+  -creates or confirms a VM named VM
+    - with default size : NC6_PROMO
+    - with default image : microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+    -accepts the license for the image
+    -creates a conda/python environment with default spec: 
+      python 3.7.x tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow
+-Then
+  -copies your current working directory (without subdirectories) to the VM
+  -runs the given command "python main.py" on the VM in a tmux session
+  -copies the VM's home folder back to your local current working directory
 
 .Example
 Start-OnVM.ps1 
     "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py"
     -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials
-    -resourceGroupName DSVM -location uksouth
+    -fetchOutput TensorFlow-2.x-Tutorials/11-AE/images
+    -resourceGroupName VM 
 
 -First creates or confirms the Azure resources required:
-  -creates or confirms a resourceGroup named DSVM in Azure location uksouth
-  -creates or confirms a VM name DSVM
-    - with default size : NC6_PROMO
-    - with default image : microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
-  -accepts the license for the image
--Then prepares the VM:
-  - creates a conda/python environment with default spec: python 3.7.x tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow
-  - clones the given git repo into the path ~/TensorFlow-2.x-Tutorials
--Runs the given command:
+  -confirms a resourceGroup named VM
+  -creates or confirms a VM named VM
+    -with default size : NC6_PROMO
+    -with default image : microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+    -accepts the license for the image
+    -creates a conda/python environment with default spec: 
+      python 3.7.x tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow
+-Then
+  -clones the given git repo into the path ~/TensorFlow-2.x-Tutorials
+-Then runs the given command:
   "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py" in a detached tmux session
+-Then copies the remote directory ~/TensorFlow-2.x-Tutorials/11-AE/images to local path ./images/
 
 .Example
 Start-OnVM.ps1 
@@ -107,24 +128,20 @@ Start-OnVM.ps1
     -image-urn microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
     -condaEnvironmentSpec "python 3.8 pytorch=1.5 matplotlib pillow"
 
--First creates or confirms the Azure resources required:
+Creates or confirms the Azure resources required:
   -creates or confirms a resourceGroup named MyRGName in Azure location uksouth
-  -creates or confirms a VM name MyOtherVMName
-    - with size : NC24_PROMO
-    - with image : microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
-  -accepts the license for the image
--Then prepares the VM:
+  -creates or confirms a VM name MyOtherVMName of the given size and image
+  - accepts the license for the image
   - creates a conda/python environment with the initial spec given
-
-And finishes. This can be used to 'warm-start' a VM. 
-My experience has typically been that it takes a few minutes to start the first VM of the day
+And finishes.
+This can be used to 'warm-start' a VM. My experience has typically been that 
+it takes a few minutes to start the first VM of the day
 
 .Example
-Start-OnVM.ps1 -fetchOutputFrom TensorFlow-2.x-Tutorials/11-AE/
+Start-OnVM.ps1 -fetchOutput some/outputs/ -recursive
 
 -attempts to find and connect to a running VM with the default name, DSVM, 
--copies the remote directory ~/TensorFlow-2.x-Tutorials/11-AE/ to a local directory 
- called 11-AE in your current working directory.
+-recursively copies the remote directory ~/some/outputs/ to a local directory ./outputs/
 
 #>
 [CmdletBinding(PositionalBinding=$false)]
@@ -134,16 +151,24 @@ Param(
   ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
   [Parameter(Position=0)][string]$commandToRun,
 
-  ##Path of a folder or files on your local machine to copy to the VM
+  ##Path of a folder or files on your local machine to copy to the VM.
+  ##Defaults to ".", which will result in all contents of the current working directory
+  ##being copied, with no subdirectories, into the VM's home directory . 
+  ##Use the -noCopy switch to override this.
+  ##
   ##If $copyFromLocal is not simply a subdirectory of the current working folder then
   ##it will be copied to a folder under the home directory with the same name as the
   ##last part of the folder's path. 
   ## eg:
   ## -copyFromLocal "/this/path/is/notasubdirectory" will be copied to "~/notasubdirectory/"
-  ## -copyFromLocal "/this/path/is/asubdirectory"    will be copied to "~/asubdirectory/"
-  ## -copyFromLocal "." will result in all contents of the current working directory
-  ##being copied straight into the home directory
+  ## -copyFromLocal "./asubdirectory"                will be copied to "~/asubdirectory/"
   [Parameter(Position=1)][ValidateScript({Test-Path $_ })][string]$copyFromLocal,
+
+  ##If true, overrides $copyFromLocal so that nothing is copied.
+  [switch]$noCopy,
+
+  ##If true, -copyFromLocal and -fetchOutput also copies subdirectories
+  [switch]$recursive,
 
   ##Uri of a git repository to clone. The git clone command will be execute from the home 
   ##directory
@@ -151,15 +176,15 @@ Param(
 
   ##Use this after starting a command on a VM to check for and retrieve results.
   ##You will want to make sure that your script outputs to this directory
-  ##If -fetchOutputFrom is not an immediate child subdirectory of the VM's home directory,
+  ##If -fetchOutput is not an immediate child subdirectory of the VM's home directory,
   ##then it will be copied to a folder under your current working directory with the same name as the
   ##last part of the folder's path. 
   ## eg:
-  ## -fetchOutputFrom "/this/path/is/notasubdirectory" will be copied to "./notasubdirectory/"
-  ## -fetchOutputFrom "/this/path/is/asubdirectory"    will be copied to "./asubdirectory/"
-  ## -fetchOutputFrom "" will result in _all_ contents of the home directory
-  ##being copied straight into the current working directory.
-  [string]$fetchOutputFrom,
+  ## -fetchOutput "/this/path/is/notasubdirectory" will be copied to "./notasubdirectory/"
+  ## -fetchOutput "./a/sub/sub/subdirectory"       will be copied to "./subdirectory/"
+  ## -fetchOutput "." or -fetchOutput "~" will copy the VM's home directory
+  ##being copied into the current working directory.
+  [string]$fetchOutput,
 
   ##The packages that will be uncluded in the default (that is, set in .bashrc)
   ##conda environment on the VM. Default to common machine learning packages
@@ -203,7 +228,7 @@ function Ask-YesElseThrow($msg){
 }
 
 # ----------------------------------------------------------------------------
-if(-not $vmName -or (-not $resourceGroupName -and -not $fetchOutputFrom) -or $help)
+if(-not $vmName -or (-not $resourceGroupName -and -not $fetchOutput) -or $help)
 {
   if(get-command less){Get-Help $PSCommandPath -Full | less}
   elseif(get-command more){Get-Help $PSCommandPath -Full | more}
@@ -404,16 +429,21 @@ if($isNewlyCreatedVM){
 $sshOK=@()
 
 
-if($copyFromLocal){
-  if( ($copyFromLocal -eq ".") -or ($copyFromLocal -eq $(pwd))){
-    $source="./*"
+if(-not $noCopy -and $copyFromLocal){
+  if($copyFromLocal -eq "."){
+    $source="*"
   }else{
     $source=$copyFromLocal
   }
   "
-  5.1 Copying $source to VM
-  "
-  scp -r $source azureuser@$vmIp`:
+  5.1 Copying $source to VM $(if($recursive){"recursively"})
+  
+  scp  $(if($recursive){"-r"}) $source azureuser@$vmIp`: ..."  
+  if($recursive){
+    scp -r $source azureuser@$vmIp`:
+  }else{
+    scp $source azureuser@$vmIp`:
+  }
   $sshOK += ,$(if($?){"✅ copyFromLocal"}else{"❌ copyFromLocal errored"})
 }
 
@@ -452,13 +482,23 @@ VM is ready for you to connect with ssh:
 
 
 # --------------------------------------------------------------------------
-if($vmIp -and $fetchOutputFrom)
+if($vmIp -and $fetchOutput)
 {
   "
-  Polling for output in $fetchOutputFrom ...
+  Polling for output in $fetchOutput ...
   "
-  "scp -r $vmIp`:$fetchOutputFrom $target ..."
-  scp -r azureuser@$vmIp`:$fetchOutputFrom .
+  if( ".","~" -eq $fetchOutput){
+    $source='*'
+  }else{
+    $source=$fetchOutput
+  }
+  "scp  $(if($recursive){"-r"}) azureuser@$vmIp`:$source $target ..."
+  if($recursive){
+    scp -r azureuser@$vmIp`:$source .
+  }else{
+    scp azureuser@$vmIp`:$source .
+  }
+  
   if(-not $target -or (Test-Path $target)){"Done."}else{"... but nothing copied."}
   exit
 }
