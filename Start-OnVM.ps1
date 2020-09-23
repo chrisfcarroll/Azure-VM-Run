@@ -30,6 +30,7 @@ Start-OnVM.ps1  [[-commandToRun] <String command and args> ]
                 [-vmName <String>] [-vmSize <String>] 
                 [-licensedAlreadyAccepted]
                 [-noConfirm] 
+                [-haltPrevious]
                 [-help]
                 [<CommonParameters>]
 
@@ -235,6 +236,11 @@ Param(
   ##Whether to answer yes to all questions and continue without user confirmation
   [Alias('YesToAll')][switch]$noConfirm,
 
+  ##Set this to first halt all running sessions - that is, all tmux and tails.
+  ##Can be used alone, or with other parameters. If used with -commandToRun, then
+  ##halt is done first, then the commandToRun
+  [switch]$haltPrevious,
+
   ##show this help text
   [switch]$help
 )
@@ -254,7 +260,7 @@ if($help)
   exit
 }
 
-$summaryHelp= -not $noConfirm -and -not ($resourceGroupName,$fetchOutput,$copyFromLocal,$commandToRun -gt " " )
+$summaryHelp= -not $noConfirm -and -not $haltPrevious -and -not ($resourceGroupName,$fetchOutput,$copyFromLocal,$commandToRun -gt " " )
 
 if($summaryHelp){
 
@@ -527,6 +533,14 @@ if($gitRepository){
 "✅ OK"
 
 # --------------------------------------------------------------------------
+
+if($haltPrevious){
+  "
+  Halting previous sessions, if any ..."
+  ssh -q azureuser@$vmIp 'tmux kill-server ;  pkill tail'
+}
+
+# --------------------------------------------------------------------------
 if($commandToRun){
 
   $logName= "$vmName-" + [DateTime]::Now.ToString('yyyyMMdd-HHmm-ssff') + '.log'
@@ -542,6 +556,8 @@ if($commandToRun){
   "
   if($commandToRun -match "^\w+\.py( |$)"){
     write-warning "Did you mean `"python [-u] $commandToRun`" rather than just $($commandToRun.split(" ")[0]) ?"
+  }elseif($commandToRun -match "^python \w+\.py( |$)"){
+    write-warning "hint: `"python -u ...`" instead of just `"python ...`" will give you a real-time view of output."
   }
 
   #tmux bash <command> seems better than just tmux <command>, because it can run a full pipeline
