@@ -478,15 +478,15 @@ if($isNewlyCreatedVM){
   "
   Setting .bashrc to load and run anaconda in non-interactive shells
   "
-  ssh azureuser@$vmIp /data/anaconda/bin/conda init bash
-  ssh azureuser@$vmIp sed -i "'s/\*) return;;/*) ;;#dont return/'" .bashrc
+  ssh -q azureuser@$vmIp /data/anaconda/bin/conda init bash
+  ssh -q azureuser@$vmIp sed -i "'s/\*) return;;/*) ;;#dont return/'" .bashrc
   "
   Creating conda environment for $condaEnvironmentSpec $pipPackagesToUpgrade
   "
-  ssh azureuser@$vmIp "conda create -n vm $condaEnvironmentSpec --yes"
-  ssh azureuser@$vmIp 'echo "conda activate vm" >> .bashrc'
+  ssh -q azureuser@$vmIp "conda create -n vm $condaEnvironmentSpec --yes"
+  ssh -q azureuser@$vmIp 'echo "conda activate vm" >> .bashrc'
   if($pipPackagesToUpgrade){
-    ssh azureuser@$vmIp "python --version && python -m pip install $pipPackagesToUpgrade --upgrade"
+    ssh -q azureuser@$vmIp "python --version && python -m pip install $pipPackagesToUpgrade --upgrade"
   }
 }
 $sshOK=@()
@@ -503,10 +503,10 @@ if(-not $noCopy -and $copyFromLocal){
   
   scp  $(if($recursiveCopy){"-r"}) $source azureuser@$vmIp`: ..."  
   if($recursiveCopy){
-    scp -r $source azureuser@$vmIp`:
+    scp -q -r $source azureuser@$vmIp`:
     $sshOK += ,$(if($?){"✅ copyFromLocal"}else{"❌ copyFromLocal errored"})
   }else{
-    scp $source azureuser@$vmIp`:
+    scp -q $source azureuser@$vmIp`:
     $sshOK += ,"✅ copyFromLocal" 
     # exit code will be > 0 for non-recursive copy just because of subdirectories
   }
@@ -516,38 +516,42 @@ if($gitRepository){
   "
   5.2 Git cloning $gitRepository ...
   "
-  ssh azureuser@$vmIp "git clone $gitRepository"
+  ssh -q azureuser@$vmIp "git clone $gitRepository"
   $sshOK += ,$(if($?){"✅ git cloned"}else{"❌ git clone errored"})
 }
 "✅ OK"
 
 # --------------------------------------------------------------------------
 if($commandToRun){
-"
-6. Run command $commandToRun in a tmux session named main ...
 
-   Use tmux to create/detach from long running jobs.
-   To detach from the tmux session use the key sequence Ctrl-B d
-   To reattach to it, use:
-   > ssh azureuser@$vmIp -t tmux attach -t main
-"
+  $logName= "$vmName-" + [DateTime]::Now.ToString('yyyyMMdd-HHmm-ssff') + '.log'
+
+  "
+  6. Run command $commandToRun in a tmux session named main ...
+
+     Use tmux to create/detach from long running jobs.
+     To detach from the tmux session use the key sequence Ctrl-B d
+     To reattach to it, use:
+     > ssh azureuser@$vmIp -t tmux attach -t main
+
+  "
   if($commandToRun -match "^\w+\.py( |$)"){
-    write-warning "Did you mean `"python $commandToRun`" ?"
+    write-warning "Did you mean `"python [-u] $commandToRun`" rather than just $($commandToRun.split(" ")[0]) ?"
   }
 
-  $tmuxbashcommand= "bash -ilc `'$($commandToRun -replace '"','\"' -replace "'","\'")`'"
-  #bash is better: can run multiple commands. $tmuxcommand= $($commandToRun -replace '"','\"' -replace "'","\'")
-  ssh azureuser@$vmIp -t tmux new-session -s main $tmuxbashcommand
+  #tmux bash <command> seems better than just tmux <command>, because it can run a full pipeline
+  $tmuxbashcommand= "bash -ilc `'$($commandToRun -replace '"','\"' -replace "'","\'")` 2>&1 | tee -a $logName `'"
+  ssh -q azureuser@$vmIp -t tmux new-session -d -s main $tmuxbashcommand
   $sshOK += ,$(if($?){"✅ Ran command."}else{"❌ start command errored"})
+  $sshOK += ,"✅ Logging to : $logName"
 }
-$sshOK
 
-"
-VM is ready for you to connect with ssh:
-
-> ssh azureuser@$vmIp
-"
-
+#--------------------------------------------------------------------------
+if($logName)
+{
+  "Tailing the command. Press Ctrl-C to disconnect"
+  ssh -q azureuser@$vmIp tail -f $logName
+}
 
 # --------------------------------------------------------------------------
 if($vmIp -and $fetchOutput)
@@ -562,11 +566,15 @@ if($vmIp -and $fetchOutput)
   }
   "scp  $(if($recursiveFetch){"-r"}) azureuser@$vmIp`:$source $target ..."
   if($recursiveFetch){
-    scp -r azureuser@$vmIp`:$source .
+    scp -q -r azureuser@$vmIp`:$source .
   }else{
-    scp azureuser@$vmIp`:$source .
+    scp -q azureuser@$vmIp`:$source .
   }
-  
-  if(-not $target -or (Test-Path $target)){"Done."}else{"... but nothing copied."}
-  exit
 }
+
+$sshOK
+
+"VM is ready for you to connect with ssh:
+
+> ssh azureuser@$vmIp
+"
