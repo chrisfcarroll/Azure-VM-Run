@@ -16,6 +16,7 @@ Depending on parameters passed it will then:
   -copy files to the VM
   -clone a git repo on the VM
   -set a commmand running
+  -tail the output of the command until you press Ctrl-C
   -copy directories from the VM back to your machine
 
 Start-OnVM.ps1  [[-commandToRun] <String command and args> ]
@@ -52,7 +53,9 @@ This Script will Take You Through These Steps
 
 6. Run a command on the VM, in a tmux session, after first updating any specified python packages
 
-7. Copy output from the VM back to your local working directory
+7. Tail the command until you press Ctrl-C
+
+8. Copy output from the VM back to your local working directory
 
 You can also ssh to the VM for an interactive session.
 
@@ -98,6 +101,7 @@ Start-OnVM.ps1 "python main.py" -copy . fetch . -g VM -location uksouth
 -Then
   -copies your current working directory (without subdirectories) to the VM
   -runs the given command "python main.py" on the VM in a tmux session
+  -tails the command until you press Ctrl-C
   -copies the VM's home folder back to your local current working directory
 
 .Example
@@ -117,9 +121,10 @@ Start-OnVM.ps1
       python 3.7.x tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow
 -Then
   -clones the given git repo into the path ~/TensorFlow-2.x-Tutorials
--Then runs the given command:
+  -runs the given command:
   "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py" in a detached tmux session
--Then copies the remote directory ~/TensorFlow-2.x-Tutorials/11-AE/images to local path ./images/
+  -tails the command until you press Ctrl-C
+  -copies the remote directory ~/TensorFlow-2.x-Tutorials/11-AE/images to local path ./images/
 
 .Example
 Start-OnVM.ps1 
@@ -132,8 +137,8 @@ Start-OnVM.ps1
 Creates or confirms the Azure resources required:
   -creates or confirms a resourceGroup named MyRGName in Azure location uksouth
   -creates or confirms a VM name MyOtherVMName of the given size and image
-  - accepts the license for the image
-  - creates a conda/python environment with the initial spec given
+  -accepts the license for the image
+  -creates a conda/python environment with the initial spec given
 And finishes.
 This can be used to 'warm-start' a VM. My experience has typically been that 
 it takes a few minutes to start the first VM of the day
@@ -527,12 +532,12 @@ if($commandToRun){
   $logName= "$vmName-" + [DateTime]::Now.ToString('yyyyMMdd-HHmm-ssff') + '.log'
 
   "
-  6. Run command $commandToRun in a tmux session named main ...
+  6. Run command $commandToRun in a tmux session ...
 
      Use tmux to create/detach from long running jobs.
      To detach from the tmux session use the key sequence Ctrl-B d
      To reattach to it, use:
-     > ssh azureuser@$vmIp -t tmux attach -t main
+     > ssh azureuser@$vmIp -t tmux attach
 
   "
   if($commandToRun -match "^\w+\.py( |$)"){
@@ -541,7 +546,7 @@ if($commandToRun){
 
   #tmux bash <command> seems better than just tmux <command>, because it can run a full pipeline
   $tmuxbashcommand= "bash -ilc `'$($commandToRun -replace '"','\"' -replace "'","\'")` 2>&1 | tee -a $logName `'"
-  ssh -q azureuser@$vmIp -t tmux new-session -d -s main $tmuxbashcommand
+  ssh -q azureuser@$vmIp -t tmux new-session -d $tmuxbashcommand
   $sshOK += ,$(if($?){"✅ Ran command."}else{"❌ start command errored"})
   $sshOK += ,"✅ Logging to : $logName"
 }
@@ -549,7 +554,9 @@ if($commandToRun){
 #--------------------------------------------------------------------------
 if($logName)
 {
-  "Tailing the command. Press Ctrl-C to disconnect"
+  "Tailing the command. Press Ctrl-C to disconnect. To reattach use:
+  > ssh azureuser@$vmIp tail -f $logName
+  "
   ssh -q azureuser@$vmIp tail -f $logName
 }
 
