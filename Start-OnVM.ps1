@@ -4,39 +4,35 @@
 
 <#
 .Synopsis
+Start-OnVM.ps1 runs a local command on an Azure VM. 
 
-Start-OnVM.ps1 runs a local command on an Azure VM.
-
-By default it will
-  -first find or create the VM and a Azure resource group to hold it.
+By default it will:
+  -first find or create a Virtual Machine and a Azure resource group to hold it.
   -use the cheapest Azure hardware with a GPU, namely NC6_PROMO 
   -use an Ubuntu DSVM image published by Microsoft, preloaded for data science and ML training
   -accept the license for the VM
 
-It can then 
+Depending on parameters passed it will then:
   -copy files to the VM
   -clone a git repo on the VM
   -set a commmand running
   -copy directories from the VM back to your machine
 
+Start-OnVM.ps1  [[-commandToRun] <String command and args> ]
+                [[-copyFromLocal] <Local path> [-recursiveCopy] | -noCopy ] 
+                [[-fetchOutput] <Path> [-recursiveFetch ]]
+                [-recursiveBothCopyAndFetch]
+                [[-gitRepository] <Uri to a git repo to clone onto the VM>]  
+                [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
+                [-resourceGroupName <String> [-location <Azure Location ID e.g. uksouth>]]
+                [-imageUrn <String>] 
+                [-vmName <String>] [-vmSize <String>] 
+                [-licensedAlreadyAccepted]
+                [-noConfirm] 
+                [-help]
+                [<CommonParameters>]
+
 More detail : https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart
-
-Usage:
-
-Start-OnVM.ps1 [[-commandToRun] <String command and args> ]
-  [[-copyFromLocal] <Local path> | -noCopy] 
-  [-fetchOutput <Path>]
-  [-recursive] 
-  [[-gitRepository] <Uri to a git repo you want to clone onto the VM>]  
-  [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
-  [-resourceGroupName <String> [-location <Azure Location ID e.g. uksouth>]]
-  [-imageUrn <String>] 
-  [-vmName <String>] [-vmSize <String>] 
-  [-licensedAlreadyAccepted]
-  [-noConfirm] 
-  [-help]
-  [<CommonParameters>]
-
 
 .Description
 
@@ -56,9 +52,9 @@ This Script will Take You Through These Steps
 
 6. Run a command on the VM, in a tmux session, after first updating any specified python packages
 
-7. ssh to the VM for an interactive session
+7. Copy output from the VM back to your local working directory
 
-8. Copy output from the VM back to your local working directory
+You can also ssh to the VM for an interactive session.
 
 ----------------------------------------------------------------------------
 Resources Created
@@ -78,8 +74,13 @@ Teardown:
 
 Delete resources with one of:
 ```
-az vm delete --name DSVM
-az group delete --name DSVM
+az vm delete --name <name>
+az group delete --name <name>
+```
+
+Check resources with:
+```
+az vm list --output table
 ```
 
 ----------------------------------------------------------------------------
@@ -162,29 +163,40 @@ Param(
   ## eg:
   ## -copyFromLocal "/this/path/is/notasubdirectory" will be copied to "~/notasubdirectory/"
   ## -copyFromLocal "./asubdirectory"                will be copied to "~/asubdirectory/"
+  ##
   [Parameter(Position=1)][ValidateScript({Test-Path $_ })][string]$copyFromLocal,
 
   ##If true, overrides $copyFromLocal so that nothing is copied.
   [switch]$noCopy,
 
-  ##If true, -copyFromLocal and -fetchOutput also copies subdirectories
-  [switch]$recursive,
-
-  ##Uri of a git repository to clone. The git clone command will be execute from the home 
-  ##directory
-  [Parameter(Position=2)][Uri]$gitRepository,
+  ##If true, -copyFromLocal also copies subdirectories
+  [switch]$recursiveCopy,
 
   ##Use this after starting a command on a VM to check for and retrieve results.
   ##You will want to make sure that your script outputs to this directory
   ##If -fetchOutput is not an immediate child subdirectory of the VM's home directory,
-  ##then it will be copied to a folder under your current working directory with the same name as the
-  ##last part of the folder's path. 
+  ##then it will be copied to a folder under your current working directory with the same 
+  ##name as the last part of the folder's path.
   ## eg:
   ## -fetchOutput "/this/path/is/notasubdirectory" will be copied to "./notasubdirectory/"
   ## -fetchOutput "./a/sub/sub/subdirectory"       will be copied to "./subdirectory/"
   ## -fetchOutput "." or -fetchOutput "~" will copy the VM's home directory
   ##being copied into the current working directory.
-  [string]$fetchOutput,
+  ##
+  ##If you are running on bash and want to use wildcards, e.g. "subdirectory/*", don't forget 
+  ##to use quotes
+  [Parameter(Position=2)][string]$fetchOutput,
+
+  ##If true, -fetchOutput also fetches subdirectories
+  [switch]$recursiveFetch,
+
+  ##If true, -copyFromLocal and -fetchOutput also copies subdirectories
+  [switch]$recursiveBothCopyAndFetch,
+
+  ##Uri of a git repository to clone. The git clone command will be execute from the home 
+  ##directory
+  [Parameter(Position=3)][Uri]$gitRepository,
+
 
   ##The packages that will be uncluded in the default (that is, set in .bashrc)
   ##conda environment on the VM. Default to common machine learning packages
@@ -212,11 +224,11 @@ Param(
   [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4', 'B1s')]
   [string]$vmSize='NC6_PROMO',
 
+  ##Use this switch to avoid waiting to accept an image license you have already accepted
+  [switch]$licensedAlreadyAccepted,
+
   ##Whether to answer yes to all questions and continue without user confirmation
   [Alias('YesToAll')][switch]$noConfirm,
-
-  ##Use this switch to avoid repeated accepting the image license
-  [switch]$licensedAlreadyAccepted,
 
   ##show this help text
   [switch]$help
@@ -228,12 +240,43 @@ function Ask-YesElseThrow($msg){
 }
 
 # ----------------------------------------------------------------------------
-if(-not $vmName -or (-not $resourceGroupName -and -not $fetchOutput) -or $help)
+
+if($help)
 {
   if(get-command less){Get-Help $PSCommandPath -Full | less}
   elseif(get-command more){Get-Help $PSCommandPath -Full | more}
   else{Get-Help $PSCommandPath -Full}  
   exit
+}
+
+$summaryHelp= -not $noConfirm -and -not ($resourceGroupName,$fetchOutput,$copyFromLocal,$commandToRun -gt " " )
+
+if($summaryHelp){
+
+  "
+  Start-OnVM.ps1  [[-commandToRun] <String command and args> ]
+                  [[-copyFromLocal] <Local path> [-recursiveCopy] | -noCopy ] 
+                  [[-fetchOutput] <Path> [-recursiveFetch ]]
+                  [-recursiveBothCopyAndFetch]
+                  [[-gitRepository] <Uri to a git repo you want to clone onto the VM>]  
+                  [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
+                  [-resourceGroupName <String> [-location <Azure Location ID e.g. uksouth>]]
+                  [-imageUrn <String>] 
+                  [-vmName <String>] [-vmSize <String>] 
+                  [-licensedAlreadyAccepted]
+                  [-noConfirm] 
+                  [-help]
+                  [<CommonParameters>]
+
+  Start-OnVM.ps1 with no parameters will start a VM if you have a default location set.
+
+  To skip this confirmation, use Start-OnVM.ps1 -noConfirm
+
+  For more help, use Start-OnVM.ps1 -help
+  "
+  if(-not (Ask-YesNo "Continue?")){
+    exit
+  }
 }
 
 # ----------------------------------------------------------------------------
@@ -277,6 +320,22 @@ if($?){
 }
 
 # ----------------------------------------------------------------------------
+# Get defaults if any, if wanted
+#
+if(-not $resourceGroupName){
+  $resourceGroupName= (az configure -l --query "[?name=='group'].value|[0]")
+  if($resourceGroupName){$resourceGroupName=$resourceGroupName.Trim('"')}
+}
+if(-not $location){
+  $location=(az configure -l --query "[?name=='location'].value|[0]")
+  if($location){$location= $location.Trim('"')}
+}
+
+$recursiveCopy= $recursiveCopy -or $recursiveBothCopyAndFetch
+$recursiveFetch= $recursiveFetch -or $recursiveBothCopyAndFetch
+
+
+# ----------------------------------------------------------------------------
 "
 1. Choose or Create a ResourceGroup $resourceGroupName
 "
@@ -308,6 +367,10 @@ if($resourceGroupName ){
     If you are not familiar with Azure, try 
     https://www.bing.com/search?q=choose+an+azure+location+near+me+site:microsoft.com
     for a suitable location name.
+
+    You can set defaults for both resource group and location:
+
+    az configure --defaults location=uksouth group=VM
     "
     exit
   }
@@ -436,15 +499,17 @@ if(-not $noCopy -and $copyFromLocal){
     $source=$copyFromLocal
   }
   "
-  5.1 Copying $source to VM $(if($recursive){"recursively"})
+  5.1 Copying $source to VM $(if($recursiveCopy){"recursively"})
   
-  scp  $(if($recursive){"-r"}) $source azureuser@$vmIp`: ..."  
-  if($recursive){
+  scp  $(if($recursiveCopy){"-r"}) $source azureuser@$vmIp`: ..."  
+  if($recursiveCopy){
     scp -r $source azureuser@$vmIp`:
+    $sshOK += ,$(if($?){"✅ copyFromLocal"}else{"❌ copyFromLocal errored"})
   }else{
     scp $source azureuser@$vmIp`:
+    $sshOK += ,"✅ copyFromLocal" 
+    # exit code will be > 0 for non-recursive copy just because of subdirectories
   }
-  $sshOK += ,$(if($?){"✅ copyFromLocal"}else{"❌ copyFromLocal errored"})
 }
 
 if($gitRepository){
@@ -466,6 +531,9 @@ if($commandToRun){
    To reattach to it, use:
    > ssh azureuser@$vmIp -t tmux attach -t main
 "
+  if($commandToRun -match "^\w+\.py( |$)"){
+    write-warning "Did you mean `"python $commandToRun`" ?"
+  }
 
   $tmuxbashcommand= "bash -ilc `'$($commandToRun -replace '"','\"' -replace "'","\'")`'"
   #bash is better: can run multiple commands. $tmuxcommand= $($commandToRun -replace '"','\"' -replace "'","\'")
@@ -492,8 +560,8 @@ if($vmIp -and $fetchOutput)
   }else{
     $source=$fetchOutput
   }
-  "scp  $(if($recursive){"-r"}) azureuser@$vmIp`:$source $target ..."
-  if($recursive){
+  "scp  $(if($recursiveFetch){"-r"}) azureuser@$vmIp`:$source $target ..."
+  if($recursiveFetch){
     scp -r azureuser@$vmIp`:$source .
   }else{
     scp azureuser@$vmIp`:$source .
