@@ -46,10 +46,32 @@ Param(
   ##directory
   [Parameter(Position=3)][Uri]$gitRepository,
 
+  ##The predefined conda environment which will be use if -imageUrn is a 
+  ##'microsoft-dsvm:ubuntu-1804:...' image.
+  ## Defaults to 'py37_tensorflow'
+  ##
+  ##If -imageUrn is a linuxdsvmubuntu image then this parameter defaults to empty,
+  ##which will be ignored
+  [ValidateSet(
+      'azureml_py36_automl',
+      'azureml_py36_pytorch',
+      'azureml_py36_tensorflow',
+      'py37_default',
+      'py37_pytorch',
+      'py37_tensorflow')]
+  [string]$condaPredefinedEnvName,
 
-  ##The packages that will be uncluded in the default (that is, set in .bashrc)
-  ##conda environment on the VM. Default to common machine learning packages
-  [string]$condaEnvironmentSpec="tensorflow-gpu=2.2 pytorch=1.5 scikit-learn matplotlib pillow",
+  ##The packages that will be included in the default (that is, set in .bashrc)
+  ##conda environment if the -imageUrn is a linuxdsvmubuntu image.
+  ##Defaults to common machine learning packages : "tensorflow-gpu=2.2 pytorch=1.5 scikit-learn matplotlib pillow"
+  ##
+  ##If -imageUrn is a 'microsoft-dsvm:ubuntu-1804:...' image then this parameter defaults to empty, 
+  ##which will be ignored
+  [string]$condaEnvironmentSpec,
+
+  ##If true, apply -condaPredefinedEnvName and/or -condaEnvironmentSpec and/or -pipPackagesToUpgrade
+  ##just as if creating the VM for the first
+  [switch]$resetCondaEnvironment,
 
   ##Packages to pip upgrade after setting up -condaEnvironmentSpec
   ##Use this only if you cannot get your required setup with -condaEnvironmentSpec
@@ -63,6 +85,15 @@ Param(
   [string]$location,
 
   ##Image urn to use for the VM
+  ##- microsoft-dsvm:ubuntu-1804 series images are probably more recent and have predefined conda enviroments for each of
+  ##pytorch, tensorflow, or neither.
+  ##- microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu don't. During setup, $condaEnvironmentSpec will be 
+  ##used to define a conda environment
+  [ValidateSet(
+    'microsoft-dsvm:ubuntu-1804:1804:20.07.06',
+    'microsoft-dsvm:ubuntu-1804:1804-gen2:20.07.06',
+    'microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09',
+    'microsoft-dsvm:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.02')]
   [string]$imageUrn="microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09",
 
 
@@ -119,7 +150,8 @@ if($help)
   exit
 }
 
-$summaryHelp= -not $noConfirm -and -not $haltPrevious -and -not ($resourceGroupName,$fetchOutput,$copyFromLocal,$commandToRun -gt " " )
+$summaryHelp= -not $noConfirm -and -not $haltPrevious -and -not $resetCondaEnvironment `
+              -and -not ($resourceGroupName,$fetchOutput,$copyFromLocal,$commandToRun -gt " " )
 
 if($summaryHelp){
 
@@ -324,30 +356,58 @@ if(-not $vmIp){
 
 # --------------------------------------------------------------------------
 "
-5. Connect to the VM, create working directory, download git repo, copy local folder
+5. Connect to the VM, choose or create conda environment, download git repo, copy local folder
 "
 
-if($isNewlyCreatedVM){
+if($isNewlyCreatedVM)
+{
   "
   You may have to wait a minute or more before the VM is ready to accept connections ...
   "
   do{
     'Waiting for VM to accept connections ...'
-    sleep 10
     ssh azureuser@$vmIp uname -a
     $didConnect= $?
+    if(-not $didConnect){sleep 10}
   }until($didConnect)
+}
 
+if( ($isNewlyCreatedVM -or $resetCondaEnvironment) `
+    -and -not $condaPredefinedEnvName -and -not $condaEnvironmentSpec)
+{
+  $cmd="curl -sH 'Metadata: true' 'http://169.254.169.254/metadata/instance?api-version=2020-06-01' " +
+       "| jq '.compute.storageProfile.imageReference | .publisher + \`":\`" + .sku'"
+  $imagesku=$(ssh azureuser@$vmIp $cmd)
+  if($imagesku -match '"microsoft-ads:linuxdsvmubuntu"'){
+    $condaEnvironmentSpec="tensorflow-gpu=2.2 pytorch=1.5 scikit-learn matplotlib pillow"
+    "You choose an image matching $imagesku`. Will create conda environment $condaEnvironmentSpec"
+  }
+  elseif($imagesku -match '"microsoft-dsvm:1804"'){
+    $condaPredefinedEnvName="py37_tensorflow"
+    "You chose an image matching $imagesku`. Will set pre-existing conda environment $condaPredefinedEnvName"
+  }
+}
+
+
+if($isNewlyCreatedVM -or $resetCondaEnvironment){
   "
   Setting .bashrc to load and run anaconda in non-interactive shells
   "
-  ssh -q azureuser@$vmIp /data/anaconda/bin/conda init bash
+  ssh -q azureuser@$vmIp /anaconda/bin/conda init bash
   ssh -q azureuser@$vmIp sed -i "'s/\*) return;;/*) ;;#dont return/'" .bashrc
-  "
-  Creating conda environment for $condaEnvironmentSpec $pipPackagesToUpgrade
-  "
-  ssh -q azureuser@$vmIp "conda create -n vm $condaEnvironmentSpec --yes"
-  ssh -q azureuser@$vmIp 'echo "conda activate vm" >> .bashrc'
+
+  if($condaPredefinedEnvName){
+    "Setting conda environment $condaPredefinedEnvName"
+    ssh -q azureuser@$vmIp "conda activate $condaPredefinedEnvName && echo `"conda activate $condaPredefinedEnvName`" >> .bashrc"
+  }
+  else{
+    "
+    Creating conda environment for $condaEnvironmentSpec $pipPackagesToUpgrade
+    "
+    ssh -q azureuser@$vmIp "conda create -n vm $condaEnvironmentSpec --yes"
+    ssh -q azureuser@$vmIp 'echo "conda activate vm" >> .bashrc'
+  }
+
   if($pipPackagesToUpgrade){
     ssh -q azureuser@$vmIp "python --version && python -m pip install $pipPackagesToUpgrade --upgrade"
   }
