@@ -1,0 +1,109 @@
+{
+  "compute": {
+    "azEnvironment": "AzurePublicCloud",
+    "customData": "",
+    "isHostCompatibilityLayerVm": "false",
+    "location": "uksouth",
+    "name": "DSVM",
+    "offer": "linux-data-science-vm-ubuntu",
+    "osType": "Linux",
+    "placementGroupId": "",
+    "plan": {
+      "name": "linuxdsvmubuntu",
+      "product": "linux-data-science-vm-ubuntu",
+      "publisher": "microsoft-ads"
+    },
+    "platformFaultDomain": "0",
+    "platformUpdateDomain": "0",
+    "provider": "Microsoft.Compute",
+    "publicKeys": [{
+      "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDEzaauanj90YGqvjO72MuZ7jKfvmC5Aq/wFy1FOQyFfAeUGKgxKIR7FIXzOoBsUVPJ31R3O+GOzkG29eE7S+JRFGBBweUQsQxGWRIH3ZI5OgWqhvWn0JvKWdDDJCxjZgEtWzENMxNjVyYk1GwIEHnZ+cduVSFsTb8nIE8MqEELIZ6S+wSL4OfKw6gIqBkDsU4wvnGT6pQybA78v1W+A4vRWxnJy82Eexa7Bv41gmvWCXqT1ps7TqSbLZiH7U9Kz8IKEZB3VggRtLIVyKPWS0kXE3e1fUvRAqSpYQhen/dEbxShGdv7babDUnJIZ7DHKebqOY5k/VJfY3mZAxyx7Gvn chris@ChrisBook3.local\n",
+      "path": "/home/azureuser/.ssh/authorized_keys"
+    }],
+    "publisher": "microsoft-ads",
+    "resourceGroupName": "VM",
+    "resourceId": "/subscriptions/3c751e5d-b46d-48a5-b66e-42a0a610221f/resourceGroups/VM/providers/Microsoft.Compute/virtualMachines/DSVM",
+    "securityProfile": {
+      "secureBootEnabled": "false",
+      "virtualTpmEnabled": "false"
+    },
+    "sku": "linuxdsvmubuntu",
+    "storageProfile": {
+      "dataDisks": [{
+        "caching": "None",
+        "createOption": "FromImage",
+        "diskSizeGB": "100",
+        "image": {
+          "uri": ""
+        },
+        "lun": "0",
+        "managedDisk": {
+          "id": "/subscriptions/3c751e5d-b46d-48a5-b66e-42a0a610221f/resourceGroups/VM/providers/Microsoft.Compute/disks/DSVM_lun_0_2_797eae6cdc804c639194551c3bb185f8",
+          "storageAccountType": "Standard_LRS"
+        },
+        "name": "DSVM_lun_0_2_797eae6cdc804c639194551c3bb185f8",
+        "vhd": {
+          "uri": ""
+        },
+        "writeAcceleratorEnabled": "false"
+      }],
+      "imageReference": {
+        "id": "",
+        "offer": "linux-data-science-vm-ubuntu",
+        "publisher": "microsoft-ads",
+        "sku": "linuxdsvmubuntu",
+        "version": "20.01.09"
+      },
+      "osDisk": {
+        "caching": "ReadWrite",
+        "createOption": "FromImage",
+        "diffDiskSettings": {
+          "option": ""
+        },
+        "diskSizeGB": "50",
+        "encryptionSettings": {
+          "enabled": "false"
+        },
+        "image": {
+          "uri": ""
+        },
+        "managedDisk": {
+          "id": "/subscriptions/3c751e5d-b46d-48a5-b66e-42a0a610221f/resourceGroups/VM/providers/Microsoft.Compute/disks/DSVM_OsDisk_1_85f254a7ed2b40889aadd802ec32c468",
+          "storageAccountType": "Standard_LRS"
+        },
+        "name": "DSVM_OsDisk_1_85f254a7ed2b40889aadd802ec32c468",
+        "osType": "Linux",
+        "vhd": {
+          "uri": ""
+        },
+        "writeAcceleratorEnabled": "false"
+      }
+    },
+    "subscriptionId": "3c751e5d-b46d-48a5-b66e-42a0a610221f",
+    "tags": "",
+    "tagsList": [],
+    "version": "20.01.09",
+    "vmId": "85f57d94-24f8-4d84-89c8-0edd193755b3",
+    "vmScaleSetName": "",
+    "vmSize": "Standard_NC6_PROMO",
+    "zone": ""
+  },
+  "network": {
+    "interface": [{
+      "ipv4": {
+        "ipAddress": [{
+          "privateIpAddress": "10.0.0.4",
+          "publicIpAddress": "51.105.35.236"
+        }],
+        "subnet": [{
+          "address": "10.0.0.0",
+          "prefix": "24"
+        }]
+      },
+      "ipv6": {
+        "ipAddress": []
+      },
+      "macAddress": "000D3A7EAC4D"
+    }]
+  }
+}

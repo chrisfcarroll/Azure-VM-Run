@@ -17,13 +17,15 @@ az vm list-skus --all --query "[?resourceType=='virtualMachines'].{name:name,siz
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
  
-
 ### List Available VM Images
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-az vm image list --offer Ubuntu --all
+az vm image list --publisher microsoft-dsvm --all 
+   --query "[?contains(version,'20.') && (contains(sku,'ubuntu') || contains(sku,'1804'))]"
 
+#These may be older?
 az vm image list -p microsoft-ads --all --query "[?contains(offer,'data-science')]
+az vm image list --offer Ubuntu --all
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
  
@@ -57,3 +59,10 @@ az ml environment list -w ml1 --query "[?contains(name,'PyTorch-1.6')]" --output
 
 az ml environment list -w ml1 --query "[?contains(name,'Tensor')].name
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+### When on a VM, get instance metadata:
+```
+curl -H "Metadata: true" "http://169.254.169.254/metadata/instance?api-version=2020-06-01"
+```

@@ -1,0 +1,91 @@
+"compute": {
+  "azEnvironment": "AzurePublicCloud",
+  "customData": "",
+  "isHostCompatibilityLayerVm": "false",
+  "location": "uksouth",
+  "name": "DSVN2",
+  "offer": "ubuntu-1804",
+  "osType": "Linux",
+  "placementGroupId": "",
+  "plan": {
+    "name": "",
+    "product": "",
+    "publisher": ""
+  },
+  "platformFaultDomain": "0",
+  "platformUpdateDomain": "0",
+  "provider": "Microsoft.Compute",
+  "publicKeys": [{
+    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDEzaauanj90YGqvjO72MuZ7jKfvmC5Aq/wFy1FOQyFfAeUGKgxKIR7FIXzOoBsUVPJ31R3O+GOzkG29eE7S+JRFGBBweUQsQxGWRIH3ZI5OgWqhvWn0JvKWdDDJCxjZgEtWzENMxNjVyYk1GwIEHnZ+cduVSFsTb8nIE8MqEELIZ6S+wSL4OfKw6gIqBkDsU4wvnGT6pQybA78v1W+A4vRWxnJy82Eexa7Bv41gmvWCXqT1ps7TqSbLZiH7U9Kz8IKEZB3VggRtLIVyKPWS0kXE3e1fUvRAqSpYQhen/dEbxShGdv7babDUnJIZ7DHKebqOY5k/VJfY3mZAxyx7Gvn",
+    "path": "/home/azureuser/.ssh/authorized_keys"
+  }],
+  "publisher": "microsoft-dsvm",
+  "resourceGroupName": "VM",
+  "resourceId": "/subscriptions/3c751e5d-b46d-48a5-b66e-42a0a610221f/resourceGroups/VM/providers/Microsoft.Compute/virtualMachines/DSVN2",
+  "securityProfile": {
+    "secureBootEnabled": "false",
+    "virtualTpmEnabled": "false"
+  },
+  "sku": "1804",
+  "storageProfile": {
+    "dataDisks": [],
+    "imageReference": {
+      "id": "",
+      "offer": "ubuntu-1804",
+      "publisher": "microsoft-dsvm",
+      "sku": "1804",
+      "version": "latest"
+    },
+    "osDisk": {
+      "caching": "ReadWrite",
+      "createOption": "FromImage",
+      "diffDiskSettings": {
+        "option": ""
+      },
+      "diskSizeGB": "150",
+      "encryptionSettings": {
+        "enabled": "false"
+      },
+      "image": {
+        "uri": ""
+      },
+      "managedDisk": {
+        "id": "/subscriptions/3c751e5d-b46d-48a5-b66e-42a0a610221f/resourceGroups/VM/providers/Microsoft.Compute/disks/DSVN2_OsDisk_1_abba5cd671c24c7ea5af24a195952e89",
+        "storageAccountType": "StandardSSD_LRS"
+      },
+      "name": "DSVN2_OsDisk_1_abba5cd671c24c7ea5af24a195952e89",
+      "osType": "Linux",
+      "vhd": {
+        "uri": ""
+      },
+      "writeAcceleratorEnabled": "false"
+    }
+  },
+  "subscriptionId": "3c751e5d-b46d-48a5-b66e-42a0a610221f",
+  "tags": "",
+  "tagsList": [],
+  "version": "20.07.06",
+  "vmId": "3b19429f-b9b1-4adc-b5c6-33cf8a6dde73",
+  "vmScaleSetName": "",
+  "vmSize": "Standard_NC6_Promo",
+  "zone": ""
+},
+"network": {
+  "interface": [{
+    "ipv4": {
+      "ipAddress": [{
+        "privateIpAddress": "10.0.0.5",
+        "publicIpAddress": "52.151.81.34"
+      }],
+      "subnet": [{
+        "address": "10.0.0.0",
+        "prefix": "24"
+      }]
+    },
+    "ipv6": {
+      "ipAddress": []
+    },
+    "macAddress": "000D3A7F9A89"
+  }]
+}
+}
