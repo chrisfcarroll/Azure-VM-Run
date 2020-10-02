@@ -75,7 +75,8 @@ Param(
 
   ##Packages to pip upgrade after setting up -condaEnvironmentSpec
   ##Use this only if you cannot get your required setup with -condaEnvironmentSpec
-  [string[]]$pipPackagesToUpgrade,
+  ##Example: -pipPackagesToUpgrade "tensorflow-gpu==2.3 matplotlib pillow"
+  [string]$pipPackagesToUpgrade,
 
   ##Required. A new or existing Azure ResourceGroup name.
   ##https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal
@@ -159,16 +160,18 @@ if($summaryHelp){
   Start-OnVM.ps1 runs a local command on an Azure VM. 
 
   Start-OnVM.ps1  [[-commandToRun] `"String command and args`" ]
-                  [[-copyFromLocal] <LocalPath> [-recursiveCopy] ] 
-                  [[-fetchOutput] <Path> [-recursiveFetch ]]
+                  [[-copyFromLocal] <LocalPath> [-recursiveCopy]] 
+                  [[-fetchOutput] <Path> [-recursiveFetch]]
                   [-recursiveBothCopyAndFetch]
                   [[-gitRepository] <Uri to a git repo you want to clone onto the VM>]  
-                  [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
+                  [-resetCondaEnvironment]
+                  [-condaPredefinedEnvName <String> | -condaEnvironmentSpec <String>]
+                  [-pipPackagesToUpgrade <String[]>] 
                   [-resourceGroupName <String> [-location <Azure Location ID e.g. uksouth>]]
-                  [-imageUrn <String>] 
+                  [-imageUrn <String>]
                   [-vmName <String>] [-vmSize <String>] 
                   [-licensedAlreadyAccepted]
-                  [-noConfirm] 
+                  [-noConfirm]
                   [-help]
                   [<CommonParameters>]
 
@@ -402,16 +405,20 @@ if($isNewlyCreatedVM -or $resetCondaEnvironment){
   }
   else{
     "
-    Creating conda environment for $condaEnvironmentSpec $pipPackagesToUpgrade
+    Creating conda environment for $condaEnvironmentSpec
     "
     ssh -q azureuser@$vmIp "conda create -n vm $condaEnvironmentSpec --yes"
     ssh -q azureuser@$vmIp 'echo "conda activate vm" >> .bashrc'
   }
-
-  if($pipPackagesToUpgrade){
-    ssh -q azureuser@$vmIp "python --version && python -m pip install $pipPackagesToUpgrade --upgrade"
-  }
 }
+
+if($pipPackagesToUpgrade){
+  "
+  Running pip install $pipPackagesToUpgrade --upgrade ...
+  "
+  ssh -q azureuser@$vmIp "python --version && python -m pip install $pipPackagesToUpgrade --upgrade"
+}
+
 $sshOK=@()
 
 
@@ -487,6 +494,7 @@ if($logName)
   "Tailing the command. Press Ctrl-C to disconnect. To reattach use:
   > ssh azureuser@$vmIp tail -f $logName
   "
+  sleep 1
   ssh -q azureuser@$vmIp tail -f $logName
 }
 
@@ -538,7 +546,7 @@ Start-OnVM.ps1  [[-commandToRun] <String command and args> ]
                 [[-fetchOutput] <Path> [-recursiveFetch ]]
                 [-recursiveBothCopyAndFetch]
                 [[-gitRepository] <Uri to a git repo to clone onto the VM>]  
-                [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String[]>] 
+                [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String>] 
                 [-resourceGroupName <String> [-location <Azure Location ID e.g. uksouth>]]
                 [-imageUrn <String>] 
                 [-vmName <String>] [-vmSize <String>] 
