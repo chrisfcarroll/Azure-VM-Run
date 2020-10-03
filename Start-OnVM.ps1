@@ -73,8 +73,9 @@ Param(
   ##just as if creating the VM for the first
   [switch]$resetCondaEnvironment,
 
-  ##Packages to pip upgrade after setting up -condaEnvironmentSpec
-  ##Use this only if you cannot get your required setup with -condaEnvironmentSpec
+  ##Packages to pip upgrade after setting up -condaEnvironmentSpec. Use this for frameworks such 
+  ##as pytorch & tensorflow which are under rapid development and for which -condaEnvironmentSpec
+  ##doens't provide a recent enough package.
   ##Example: -pipPackagesToUpgrade "tensorflow-gpu==2.3 matplotlib pillow"
   [string]$pipPackagesToUpgrade,
 
@@ -109,7 +110,7 @@ Param(
   [switch]$licensedAlreadyAccepted,
 
   ##Whether to answer yes to all questions and continue without user confirmation
-  [Alias('YesToAll')][switch]$noConfirm,
+  [Alias('yes')][switch]$noConfirm,
 
   ##Set this to first halt all running sessions - that is, all tmux and tails.
   ##Can be used alone, or with other parameters. If used with -commandToRun, then
