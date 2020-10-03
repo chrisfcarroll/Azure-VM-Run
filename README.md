@@ -213,10 +213,10 @@ Choose from
   (640TensorCores,5120Cuda Cores, 32-64GB HBM2 memory)
 
 
-Tesla K80 : A 2014 Server Kepler design (One K80 = two GK210s each with 12GB GDDR5)
-Tesla M60 : A 2015 Workstation GPU Maxwell design 
-Tesla P100: A 2016 Datacentre Pascal design
-Tesla V100: A 2017 Datacentre Volta design
+* Tesla K80 : A 2014 Server Kepler design (One K80 = two GK210s each with 12GB GDDR5)
+* Tesla M60 : A 2015 Workstation GPU Maxwell design 
+* Tesla P100: A 2016 Datacentre Pascal design
+* Tesla V100: A 2017 Datacentre Volta design
 
 | VM Size | Has GPU | NVida GPU Rating | GPU MHz/Cores | GPU RAM | VCPUs | VM Ram | $ per hour |
 |---------|---------|------------------|---------|-----------|---------|-------|---------|
