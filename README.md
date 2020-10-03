@@ -221,13 +221,13 @@ Tesla V100: A 2017 Datacentre Volta design
 | VM Size | Has GPU | NVida GPU Rating | GPU MHz/Cores | GPU RAM | VCPUs | VM Ram | $ per hour |
 |---------|---------|------------------|---------|-----------|---------|-------|---------|
 | NC6 | 1x Tesla K80 | 8 TFlops | 560-875MHz 2496 cores | 24GB GDDR5 | 6 cpucores | 56GB | $1 per hr |
-| NC12 | 2x Tesla K80 | 2x 8 TFlops 560-875MHz 2496 cores | 24GB GDDR5 | 12 cpucores | 112GB | $2 per hr |
-| NC24 | 4x Tesla K80 | 4x 8 TFlops 560-875MHz 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $5 per hr |
-| NC24r | 4x Tesla K80 | 4x 8 TFlops 560-875MHz 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $5 per hr |
+| NC12 | 2x Tesla K80 | 2x 8 TFlops | 560-875MHz 2496 cores | 24GB GDDR5 | 12 cpucores | 112GB | $2 per hr |
+| NC24 | 4x Tesla K80 | 4x 8 TFlops | 560-875MHz 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $5 per hr |
+| NC24r | 4x Tesla K80 | 4x 8 TFlops | 560-875MHz 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $5 per hr |
 | NC6 Promo | 1x Tesla K80 | 8 TFlops | 560-875MHz 2496 cores | 24GB GDDR5 | 6 cpucores | 56GB | $0.60 per hr |
-| NC12 Promo | 2x Tesla K80 | 2x 8 TFlops 560-875MHz 2496 cores | 24GB GDDR5 | 12 cpucores | 112GB | $1 per hr |
-| NC24 Promo | 4x Tesla K80 | 4x 8 TFlops 560-875MHz 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
-| NC24r Promo | 4x Tesla K80 | 4x 8 TFlops 560-875MHz 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
+| NC12 Promo | 2x Tesla K80 | 2x 8 TFlops | 560-875MHz 2496 cores | 24GB GDDR5 | 12 cpucores | 112GB | $1 per hr |
+| NC24 Promo | 4x Tesla K80 | 4x 8 TFlops | 560-875MHz 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
+| NC24r Promo | 4x Tesla K80 | 4x 8 TFlops | 560-875MHz 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
 | NC6s v3 | 1x Tesla V100 | 15TFlops / 112 TFlops | 640 TensorCores 5120 CUDA cores | 16GB HBM2 | 6 cpucores | 112GB | $3 per hr |
 | NC12s v3 | 2x Tesla V100 | 2x 15TFlops / 112 TFlops | 640 TensorCores 5120 CUDA cores | 32GB HBM2 | 12 cpucores | 224GB | $7 per hr |
 | NC24s v3 | 4x Tesla V100 | 4x 15TFlops / 112 TFlops | 640 TensorCores 5120 CUDA cores | 64GB HBM2 | 24 cpucores | 448GB | $14 per hr |
