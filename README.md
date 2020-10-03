@@ -223,24 +223,24 @@ Tesla V100: A 2017 Datacentre Volta design
 | NC6 | 1x Tesla K80 | 8 TFlops | 560-875MHz | 2496 cores | 24GB GDDR5 | 6 cpucores | 56GB | $1 per hr |
 | NC12 | 2x Tesla K80 | 2x 8 TFlops 560-875MHz | 2496 cores | 24GB GDDR5 | 12 cpucores | 112GB | $2 per hr |
 | NC24 | 4x Tesla K80 | 4x 8 TFlops 560-875MHz | 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $5 per hr |
-| NC24r 4x Tesla K80 | 4x 8 TFlops 560-875MHz | 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $5 per hr |
-| NC6 Promo 1x Tesla K80 | 8 TFlops | 560-875MHz | 2496 cores | 24GB GDDR5 | 6 cpucores | 56GB | $0.60 per hr |
+| NC24r | 4x Tesla K80 | 4x 8 TFlops 560-875MHz | 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $5 per hr |
+| NC6 Promo | 1x Tesla K80 | 8 TFlops | 560-875MHz | 2496 cores | 24GB GDDR5 | 6 cpucores | 56GB | $0.60 per hr |
 | NC12 Promo | 2x Tesla K80 | 2x 8 TFlops 560-875MHz | 2496 cores | 24GB GDDR5 | 12 cpucores | 112GB | $1 per hr |
 | NC24 Promo | 4x Tesla K80 | 4x 8 TFlops 560-875MHz | 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
-| NC24r Promo 4x Tesla K80 | 4x 8 TFlops 560-875MHz | 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
-| NC6s v3 | 1x Tesla V100 15TFlops / 112 TFlops | 640 TensorCores | 5120 CUDA cores | 16GB HBM2 | 6 cpucores | 112GB | $3 per hr |
-| NC12s v3 | 2x Tesla V100 2x 15TFlops / 112 TFlops | 640 TensorCores 5120 CUDA cores 32GB HBM2 | 12 cpucores | 224GB | $7 per hr |
-| NC24s v3 | 4x Tesla V100 4x 15TFlops / 112 TFlops | 640 TensorCores 5120 CUDA cores 64GB HBM2 | 24 cpucores | 448GB | $14 per hr |
+| NC24r Promo | 4x Tesla K80 | 4x 8 TFlops 560-875MHz | 2496 cores | 24GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
+| NC6s v3 | 1x Tesla V100 | 15TFlops / 112 TFlops | 640 TensorCores | 5120 CUDA cores | 16GB HBM2 | 6 cpucores | 112GB | $3 per hr |
+| NC12s v3 | 2x Tesla V100 | 2x 15TFlops / 112 TFlops | 640 TensorCores | 5120 CUDA cores | 32GB HBM2 | 12 cpucores | 224GB | $7 per hr |
+| NC24s v3 | 4x Tesla V100 | 4x 15TFlops / 112 TFlops | 640 TensorCores | 5120 CUDA cores | 64GB HBM2 | 24 cpucores | 448GB | $14 per hr |
 | NC24rs v3 | 4x Tesla V100 | 4x 15TFlops / 112 TFlops | 640 TensorCores | 5120 CUDA cores | 64GB HBM2 | 24 cpucores | 448GB | $15 per hr |
-| NV6 1x Tesla M60 | 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 6 cpucores | 56GB | $1 per hr |
-| NV12 | 2x Tesla M60 | 2x 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 12 cpucores | 112GB | $3 per hr |
-| NV24 | 4x Tesla M60 | 4x 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 24 cpucores | 224GB | $6 per hr |
-| NV6 Promo 1x Tesla M60 | 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 6 cpucores | 56GB | $0.60 per hr |
-| NV12 Promo | 2x Tesla M60 | 2x 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 12 cpucores | 112GB | $1 per hr |
-| NV24 Promo | 4x Tesla M60 | 4x 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 24 cpucores | 224GB | $3 per hr |
-| NV12s v3 | 1x Tesla M60 | 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 12 cpucores | 112GB | $1 per hr |
-| NV24s v3 | 2x Tesla M60 | 2x 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
-| NV48s v3 | 4x Tesla M60 | 4x 9 TFlops | 4096 CUDA cores 16GB GDDR5 | 48 cpucores | 448GB | $5 per hr |
+| NV6 | 1x Tesla M60 | 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 6 cpucores | 56GB | $1 per hr |
+| NV12 | 2x Tesla M60 | 2x 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 12 cpucores | 112GB | $3 per hr |
+| NV24 | 4x Tesla M60 | 4x 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 24 cpucores | 224GB | $6 per hr |
+| NV6 Promo | 1x Tesla M60 | 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 6 cpucores | 56GB | $0.60 per hr |
+| NV12 Promo | 2x Tesla M60 | 2x 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 12 cpucores | 112GB | $1 per hr |
+| NV24 Promo | 4x Tesla M60 | 4x 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 24 cpucores | 224GB | $3 per hr |
+| NV12s v3 | 1x Tesla M60 | 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 12 cpucores | 112GB | $1 per hr |
+| NV24s v3 | 2x Tesla M60 | 2x 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 24 cpucores | 224GB | $2 per hr |
+| NV48s v3 | 4x Tesla M60 | 4x 9 TFlops | 4096 CUDA cores | 16GB GDDR5 | 48 cpucores | 448GB | $5 per hr |
 
 ### MS Docs on:
 - [N series GPU enabled virtual machines](https://azure.microsoft.com/en-gb/pricing/details/virtual-machines/series/)
