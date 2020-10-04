@@ -2,7 +2,7 @@
 ## Run your scripts on gpu powered VMs & compute resources on Azure, from scratch, in 5 minutes
 ## `az vm` and `az ml compute` Quickstart
 
-### Q: How can I *script* training runs to run on GPU-enabled computing on Azure?
+### Q: How can I *script* tasks to run on GPU-enabled computing on Azure?
 
 ### A: You Could:
 
