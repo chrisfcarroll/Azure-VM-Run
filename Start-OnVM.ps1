@@ -10,12 +10,14 @@ Param(
   ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
   [Parameter(Position=0)][string]$commandToRun,
 
-  ##Command to execute after copyFromLocal (if any) and after cloning gitRepository (if any)
-  ##The command will run in a detached tmux session and is taken to be a Python 
-  ##script which will be run with python -u
-  [Parameter(Position=0)][string]$pythonCommandToRun,
+  ##A python script to run after copyFromLocal (if any) and after cloning gitRepository (if any)
+  ##and after commandToRun (if any).
+  ##The command will run in a detached tmux session and is assumed to be a Python 
+  ##script, which will be run with "python -u <pythonCommandToRun>"
+  [Parameter][string]$pythonCommandToRun,
 
   ##Path of a folder or files on your local machine to copy to the VM.
+  ##scp is used, so scp's semantics are followed:
   ##If -copyFromLocal is not simply a subdirectory of the current working folder then
   ##it will be copied to a folder under the home directory with the same name as the
   ##last part of the folder's path, e.g:
@@ -145,7 +147,7 @@ function main{
   Ensure-VM-ElseCreateAndPrepareNewVM
   CopyLocalFilesIfWanted
   GitCloneIfWanted
-  RunAndTailCommandIfWanted
+  RunAndTailCommandsIfWanted
   FetchOutputsIfWanted
   exit
 }
@@ -173,20 +175,21 @@ if($summaryHelp){
   "
   Start-OnVM.ps1 runs a local command on an Azure VM. 
 
-  Start-OnVM.ps1  [[-commandToRun] `"String command and args`" ] 
-                  [[-pythonCommandToRun] `"String command and args`" ] 
-                  [[-copyFromLocal] <LocalPath> [-recursiveCopy]] 
-                  [[-fetchOutput] <Path> [-recursiveFetch]]
+  Start-OnVM.ps1  [[-commandToRun] <String command and args> ] 
+                  [[-pythonCommandToRun] <String file.py and args>] 
+                  [[-copyFromLocal] <Local path> [-recursiveCopy] ] 
+                  [[-fetchOutput] <Path> [-recursiveFetch ]]
                   [-recursiveBothCopyAndFetch]
-                  [[-gitRepository] <Uri to a git repo you want to clone onto the VM>]  
-                  [-resetCondaEnvironment]
-                  [-condaPredefinedEnvName <String> | -condaEnvironmentSpec <String>]
-                  [-pipPackagesToUpgrade <String[]>] 
+                  [[-gitRepository] <Uri to a git repo to clone onto the VM>]  
+                  [-condaPredefinedEnvName <String>] [-condaEnvironmentSpec <String>]
+                  [-resetCondaEnvironment] 
+                  [-pipPackagesToUpgrade <String>] 
                   [-resourceGroupName <String> [-location <Azure Location ID e.g. uksouth>]]
-                  [-imageUrn <String>]
-                  [-vmName <String>] [-vmSize <String>] 
+                  [-imageUrn <String>] 
                   [-licensedAlreadyAccepted]
-                  [-noConfirm]
+                  [-vmName <String>] [-vmSize <String>] 
+                  [-noConfirm] 
+                  [-haltPrevious]
                   [-help]
                   [<CommonParameters>]
 
@@ -240,11 +243,14 @@ if($?){
 }
 
 # ----------------------------------------------------------------------------
-if(-not $resourceGroupName){
+if(-not $resourceGroupName)
+{
   $resourceGroupName= (az configure -l --query "[?name=='group'].value|[0]")
-  if($resourceGroupName){$resourceGroupName=$resourceGroupName.Trim('"')}
+  if($resourceGroupName){ $resourceGroupName=$resourceGroupName.Trim('"') }
+  elseif($noConfirm    ){ $resourceGroupName="VMRun" }
 }
-if(-not $location){
+if(-not $location)
+{
   $location=(az configure -l --query "[?name=='location'].value|[0]")
   if($location){$location= $location.Trim('"')}
 }
@@ -283,7 +289,7 @@ if($resourceGroupName ){
 
     You can set defaults for both resource group and location:
 
-    az configure --defaults location=uksouth group=VM
+    az configure --defaults location=uksouth group=VMRun
     "
     exit
   }
@@ -484,8 +490,10 @@ if($haltPrevious){
 }
 
 # --------------------------------------------------------------------------
-$logName= "$vmName-" + [DateTime]::Now.ToString('yyyyMMdd-HHmm-ssff') + '.log'
 if($commandToRun -or $pythonCommandToRun){
+
+  $logName= "$vmName-" + [DateTime]::Now.ToString('yyyyMMdd-HHmm-ssff') + '.log'
+
   "
   6. Run commands in a tmux session ...
      $commandToRun 
@@ -570,32 +578,35 @@ Start-OnVM.ps1 runs a local command on an Azure VM.
 By default it will:
   -first find or create a Virtual Machine and a Azure resource group to hold it.
   -use the cheapest Azure hardware with a GPU, namely NC6_PROMO 
-  -use an Ubuntu DSVM image published by Microsoft, preloaded for data science and ML training
-  -accept the license for the VM
+  -use a microsoft-dsvm:ubuntu-1804 image, preloaded for data science and ML training
+  -Set the conda environment to python 3.7 with tensorflow
 
 Depending on parameters passed it will then:
-  -copy files to the VM
+  -copy files to the VM. Copy defaults to not recursive.
   -clone a git repo on the VM
-  -set a commmand running
+  -set a commmand and/or a python command running
+  -change or update the conda enviroment and/or use pip to install or ugrade packages
   -tail the output of the command until you press Ctrl-C
-  -copy directories from the VM back to your machine
+  -fetch files from the VM back to your machine
 
-Start-OnVM.ps1  [[-commandToRun] <String command and args> ]
+Start-OnVM.ps1  [[-commandToRun] <String command and args> ] [-pythonCommandToRun] <String file.py and args>] 
                 [[-copyFromLocal] <Local path> [-recursiveCopy] ] 
                 [[-fetchOutput] <Path> [-recursiveFetch ]]
                 [-recursiveBothCopyAndFetch]
                 [[-gitRepository] <Uri to a git repo to clone onto the VM>]  
-                [-condaEnvironmentSpec <String>] [-pipPackagesToUpgrade <String>] 
+                [-condaPredefinedEnvName <String>] [-condaEnvironmentSpec <String>]
+                [-resetCondaEnvironment] 
+                [-pipPackagesToUpgrade <String>] 
                 [-resourceGroupName <String> [-location <Azure Location ID e.g. uksouth>]]
                 [-imageUrn <String>] 
-                [-vmName <String>] [-vmSize <String>] 
                 [-licensedAlreadyAccepted]
+                [-vmName <String>] [-vmSize <String>] 
                 [-noConfirm] 
                 [-haltPrevious]
                 [-help]
                 [<CommonParameters>]
 
-More detail : https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart
+More detail : https://github.com/chrisfcarroll/Azure-VM-Run
 
 .Description
 
@@ -631,8 +642,10 @@ Resources Created
           └── Python Environment with PyTorch, TensorFlow, Scikit etc
 
 The VM defaults to:
-- image = linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+- image = microsoft-dsvm:ubuntu-1804:1804:20.07.06
 - size  = NC6_Promo
+- name = DSVM
+- resourceGroup Name= VMRun
 
 Teardown:
 
@@ -650,15 +663,15 @@ az vm list --output table
 ----------------------------------------------------------------------------
 
 .Example
-Start-OnVM.ps1 "python main.py" -copy . fetch . -g VM -location uksouth
+Start-OnVM.ps1 -python main.py -copy . fetch . -location uksouth
 -First creates or confirms the Azure resources required:
-  -creates or confirms a resourceGroup named VM in Azure location uksouth
-  -creates or confirms a VM named VM
+  -a resourceGroup named VMRun in Azure location uksouth
+  -a VM named DSVM
     - with default size : NC6_PROMO
-    - with default image : microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+    - with default image : microsoft-dsvm:ubuntu-1804:1804
     -accepts the license for the image
-    -creates a conda/python environment with default spec: 
-      python 3.7.x tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow
+    -sets the conda environment to python 3.7 with tensorflow
+
 -Then
   -copies your current working directory (without subdirectories) to the VM
   -runs the given command "python main.py" on the VM in a tmux session
@@ -667,23 +680,24 @@ Start-OnVM.ps1 "python main.py" -copy . fetch . -g VM -location uksouth
 
 .Example
 Start-OnVM.ps1 
-    "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py"
+    "python -u TensorFlow-2.x-Tutorials/11-AE/ex11AE.py"
     -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials
     -fetchOutput TensorFlow-2.x-Tutorials/11-AE/images
-    -resourceGroupName VM 
+    -recursiveFetch
+    -condaEnvironmentSpec "python=3.8 tensorflow-gpu=2.2 scikit-learn matplotlib pillow"
+    -pipPackagesToUpgrade tensorflow-gpu==2.3 matplotlib
 
 -First creates or confirms the Azure resources required:
-  -confirms a resourceGroup named VM
-  -creates or confirms a VM named VM
+  -a resourceGroup named VMRun
+  -a VM named DSVM
     -with default size : NC6_PROMO
-    -with default image : microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
+    -with default image : microsoft-dsvm:ubuntu-1804:1804
     -accepts the license for the image
-    -creates a conda/python environment with default spec: 
-      python 3.7.x tensorflow=2.2 pytorch=1.5 scikit-learn matplotlib pillow
 -Then
+  -creates a conda/python environment with the initial spec given
+  -runs pip install --upgrade with the packages given
   -clones the given git repo into the path ~/TensorFlow-2.x-Tutorials
-  -runs the given command:
-  "python TensorFlow-2.x-Tutorials/11-AE/ex11AE.py" in a detached tmux session
+  -runs the given command in a detached tmux session
   -tails the command until you press Ctrl-C
   -copies the remote directory ~/TensorFlow-2.x-Tutorials/11-AE/images to local path ./images/
 
@@ -692,20 +706,18 @@ Start-OnVM.ps1
     -vmName MyOtherVMName 
     -resourceGroupName MyRGName -location uksouth
     -vmSize NC24_PROMO
-    -image-urn microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09
-    -condaEnvironmentSpec "python 3.8 pytorch=1.5 matplotlib pillow"
+    -condaPredefinedEnvName py37_pytorch
+    -pipPackagesToUpgrade matplotlib
+    -copy workingdir -recursiveCopy
 
-Creates or confirms the Azure resources required:
-  -creates or confirms a resourceGroup named MyRGName in Azure location uksouth
-  -creates or confirms a VM name MyOtherVMName of the given size and image
-  -accepts the license for the image
-  -creates a conda/python environment with the initial spec given
-And finishes.
-This can be used to 'warm-start' a VM. My experience has typically been that 
-it takes a few minutes to start the first VM of the day
+- creates or confirms the Azure resources required
+- sets up the conda/python environnment specified
+- copies workingdir and subdirectories to the VM
+- and stops.
+This can be used to 'warm-start' a VM.
 
 .Example
-Start-OnVM.ps1 -fetchOutput some/outputs/ -recursive
+Start-OnVM.ps1 -fetchOutput some/outputs/ recursiveFetch
 
 -attempts to find and connect to a running VM with the default name, DSVM, 
 -recursively copies the remote directory ~/some/outputs/ to a local directory ./outputs/
