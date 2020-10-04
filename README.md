@@ -1,17 +1,18 @@
-# `az ml` Quickstart
-## Create Azure machine learning resources and run scripts, from scratch, in 10 minutes
+# Azure VM Run
+## Run your scripts on gpu powered VMs & compute resources on Azure, from scratch, in 5 minutes
+## `az vm` and `az ml compute` Quickstart
 
-### Q: How can I *script* training runs to run on GPU-enabled computing on Azure?
+### Q: How can I *script* tasks to run on GPU-enabled computing on Azure?
 
 ### A: You Could:
 
 -   Use `az ml run submit-script` and learn about the sequence of 8
     (yes, eight) resources & files you will need to create before it works
--   Go old-school, create a VM, and send a repo and data to it over ssh
+-   Ccreate a VM, send a repo and data to it over ssh and copy the results back afterwards
 
 ### OR You Could:
 -   Use these two scripts to do either of those two tasks for you in 5 minutes
-    _and_ help you learn how it all worked at your leisure.
+    _and_ help you learn at your leisure how it all worked.
 
 #### *Required:*
 
@@ -21,11 +22,50 @@
 2. [PowerShell](https://github.com/PowerShell/PowerShell)
 3. Step zero for both options is, [install the az cli, and login](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
-# Option 1. Using Azure's managed infrastructure for ML training
+
+# Option 1. Virtual Machine with GPU and ML tooling
+
+_*Required*_: `ssh` and some basic familiarity with it
+
+```
+Start-OnVM.ps1 -python main.py -copy . fetch . -location uksouth
+```
+
+- First creates or confirms the Azure resources required:
+  - a resourceGroup (default name VMRun) in Azure location uksouth
+  - a VM (default name DSVM)
+    - with default size : NC6_PROMO
+    - with default image : microsoft-dsvm:ubuntu-1804:1804
+    -accepts the license for the image
+    -sets the conda environment to python 3.7 with tensorflow
+- Then
+  - copies your current working directory (without subdirectories) to the VM
+  - runs the given command "python main.py" on the VM in a tmux session
+  - tails the command until you press Ctrl-C
+  - copies the VM's home folder back to your local current working directory
+
+_NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
+
+### Yes but what about … ?
+See `Start-OnVM.ps1 -help` for more options and details.
+
+To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, 
+your choice of unix shell, and/or `X-windows`. The GUI bells & whistles are portrayed at 
+https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
+
+### Tear Down
+Keeping an N-series VM running may cost you $10-30 per day. Delete the whole resource group or just the VM with one of:
+```
+az vm delete --name DSVM
+az group delete --name VMRun
+```
+_Don't get stung! Check in your Azure portal that all resources have been deleted._
+
+# Option 2. Azure's managed offering for ML
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
-./Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth `
+Start-OnComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth `
         -environmentFor PyTorch `
         -submit `
         -NoConfirm
@@ -35,9 +75,9 @@ _NB to copy and paste into a non-powershell shell, replace the backtick line-con
 - will submit the script and stay attached, streaming the logs to your console. You can see progress and output at https://ml.azure.com or see status at `az ml run list`
 
 ### Yes but what about … ?
-The script can take you from the pre-canned example to defining your own datasets, using [other ML frameworks (TensorFlow etc)](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md), specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and more detail.
+The script can take you from the pre-canned example to defining your own datasets, using [other ML frameworks (TensorFlow etc)](https:helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md), specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and more detail.
 ```
-./Run-OnAzureMLComputeTarget.ps1 -?
+./Start-OnComputeTarget.ps1 -?
 ```
 
 ### Show me the GUI?
@@ -48,63 +88,40 @@ to see that what the script does appears as expected in your azure account,
 and to see experiment results.
 
 ### Tear Down
-Keeping a workspace will cost you about $1 per day. Delete the whole resource group or just the workspace with one of:
+Keeping a workspace running may cost $10-$30 or more per day. Delete the whole resource group or just the workspace with one of:
 ```
 az ml workspace delete -w ml1 -g ml1
 az group delete --name ml1
 ```
-
-# Option 2. Using a VM based on one of Microsoft's Data Science Virtual Machine images
-
-_*Required*_: `ssh` and some basic familiarity with it
-
-_NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
-```
-./Run-OnAzureVM.ps1 ml1 ml1 -location uksouth `
-        -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials `
-        -copyLocalFolder . `
-        -commandToRun "python TensorFlow-2.x-Tutorials/11-AE/ex11AutoEncoderMnist.py"  
-```
-- will create a `Resource Group` and a `Virtual Machine` both named ml1
-- will accept the license for the Data Science Virtual Machine image 
-- will clone the specified git repo to your home directory on the VM
-- will copy the local folder specified to your home directory on the VM
-- will run the given command
-
-_NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
-
-### Yes but what about … ?
-The script is intended to be simple. Use your own git repo or local folder, and specify your own `commandToRun`. Call the script with -? to see more options and more detail
-```
-./Run-OnAzureVM.ps1 -?
-```
-To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
-The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
-
-### Tear Down
-Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with one of:
-```
-az vm delete --name ml1
-az group delete --name ml1
-```
+_Don't get stung! Check in your Azure portal that all resources have been deleted._
 
 # In More Detail
 
-Azure offers two approaches to cloud ML:
-1. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs. 
-2. Or, a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/). Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
+Azure offers two viable approaches to cloud ML:
+1. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs, provide a shared workspace for data, results, and experiment history. 
+2. Or, a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/) with NVida GPU acceleratora. Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
 
-## Option 1. Using Azure's managed infrastructure for ML training
+### Option 1. Using Microsoft's Data Science Virtual Machine' image for ML training or work
+Microsoft have published several “Data Science Virtual Machine” images. The recommended image runs on Ubuntu and has NVidia CUDA support and GPU management. 
+- The images are preloaded with python, R studio, and a shed-load of python ML frameworks.
+- Pre-installed Conda environments are python 3.7 or 3.8 with tensorflow or pytorch
+- The script defaults to the cheapset VM size with a GPU
+- Advantages of a VM over a computetarget: 
+  - Interactive as well as batch. You can SSH to the VM or connect from X-windows, so it's a desktop experience
+  - Often (in my experience) faster startup than a managed computetarget, and no waiting in a queue for resources
+  -Almost certainly cheaper, possibly a lot cheaper. You only need the VM for runs, you take respponsibility for keeping copies of data, results and history.
+
+### Option 2. Using Azure's managed infrastructure for ML training
+
+The managed infrastructure product is more focussed on GUI than on scripting. To script successfully, you need to know exactly the sequence of resources you must create & tear down managed cloud-based ML resources.
 
 #### Resources created for managed ML
-
-What is needed to create, use, & tear down managed cloud-based ML resources?
 <pre>
 [Azure Subscription]
   └── ResourceGroup (at a location) : keeps AZ resources together
       └── WorkSpace : keep your ML work and resources together
           ├── Computetarget (with a vmSize which may include GPU)
-          ├── Envionment (simplest option is an AzureML curated one)
+          ├── Environment (simplest option is an AzureML curated one)
           ├── Dataset(s) (optional)
           └── Experiment : Keep related runs together
               └── runconfig file
@@ -158,7 +175,7 @@ Not covered by this script:
 #### Examples
 
 ```
-Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1
+Start-OnComputeTarget.ps1 ml1 ml1 ml1 ml1
   -datasetName mnist 
   -environmentFor TensorFlow 
   -script ./scripts/train.py
@@ -176,7 +193,7 @@ Will do these steps:
 _If you add the -submit flag it will also start the run_
 
 ```
-Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 -location uksouth
+Start-OnComputeTarget.ps1 ml1 ml1 ml1 -location uksouth
 ```
 Creates:
   -a resourceGroup named ml1 in Azure location uksouth,
@@ -184,34 +201,25 @@ Creates:
   -a computetarget ml1 of default size (nc6) in the workspace
 and then stops, telling you what else you must specify to proceed
 
-## Option 2. Using an Azure Data Science Virtual Machine' image for ML training or work
-
-- Microsoft have published several “Data Science Virtual Machine” images. The script uses one recommended for CUDA which is:
-`microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09`
-- The images are preloaded with python, R studio, and a shed-load of python ML frameworks.
-- The script defaults to VM size = NC6 which is the cheapset VM size with a GPU
-- Advantages of a VM over a computetarget: 
-  - Interactive as well as batch. You can SSH to the VM or connect from X-windows, so it's a desktop experience
-  - Often (in my experience) faster startup than a managed computetarget, and no waiting in a queue for resources
-- All the parameters `-gitRepository  -copyLocalFolder -commandToRun` will run with current directory as the Home directory, so copied or git-cloned folders can be referenced with a simple relative path, as in the example given above.
-
 ## Addenda
 
-### Comments on Azure GPU options
+### Azure GPU options
 
-A computetarget is a VM or at least it is specified with a VM size. You'll want to be sure to use a VMSize that includes a GPU.
+A computetarget is a VM or at least it is specified with a VM size, so the machine and GPU options are the same for both options. You'll want to be sure to use a VMSize that includes a GPU.
 
 *TL;DR:* Use a N-series VM for the NVidia Tesla GPUs. 
-- The oldest hardware - NC series - now has 50% off promo options, but these seem not to be accessible for ML workspace setup. 
-- Note also that on a new account you may have to first request access to the larger VMs, which you can do via the GUI at https://ml.azure.com.
+- The oldest hardware - NC series - now has 50% off promo options
+- On a new account you may have to first request access to the larger VMs. You can do this via the GUI at https://ml.azure.com or via the URL you get in an error message telling you to request a quota change.
 
 Choose from 
-- $0.60 per hour for NC6Promo - Tesla K80 
+- $0.60 per hour for NC6Promo with Tesla K80 
 - $1.20-$2.50 per hour for NC12 or NC24 Promo - 2 or 4 x Tesla K80
   (2015 design, 2496 cores @ 560MHz-875MHz 24GB GDDR5)
 - $7-15 per hour for NC12v3 - NC24v3 - 2-4 x Tesla V100 
   (640TensorCores,5120Cuda Cores, 32-64GB HBM2 memory)
 
+- _Don't pay for dual or quad GPU machines unless your code can use them_
+- _You will have storage charges as well as VM charges. Bigger VMs have more expensive storage_
 
 * Tesla K80 : A 2014 Server Kepler design (One K80 = two GK210s each with 12GB GDDR5)
 * Tesla M60 : A 2015 Workstation GPU Maxwell design 
