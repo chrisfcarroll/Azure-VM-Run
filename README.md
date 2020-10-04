@@ -1,5 +1,5 @@
-# `az ml` Quickstart
-## Create Azure machine learning resources and run scripts, from scratch, in 10 minutes
+# Create Azure GPU machine learning resources and run scripts, from scratch, in 5 minutes
+## `az vm` and `az ml` Quickstart
 
 ### Q: How can I *script* training runs to run on GPU-enabled computing on Azure?
 
@@ -20,6 +20,44 @@
    and you won't have any GPU._
 2. [PowerShell](https://github.com/PowerShell/PowerShell)
 3. Step zero for both options is, [install the az cli, and login](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+
+
+# Option 1. Using a VM based on one of Microsoft's Data Science Virtual Machine images
+
+_*Required*_: `ssh` and some basic familiarity with it
+
+_NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
+```
+Start-OnVM.ps1 -python main.py -copy . fetch . -location uksouth
+```
+-First creates or confirms the Azure resources required:
+  -a resourceGroup named VMRun in Azure location uksouth
+  -a VM named DSVM
+    - with default size : NC6_PROMO
+    - with default image : microsoft-dsvm:ubuntu-1804:1804
+    -accepts the license for the image
+    -sets the conda environment to python 3.7 with tensorflow
+-Then
+  -copies your current working directory (without subdirectories) to the VM
+  -runs the given command "python main.py" on the VM in a tmux session
+  -tails the command until you press Ctrl-C
+  -copies the VM's home folder back to your local current working directory
+
+_NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
+
+### Yes but what about … ?
+```
+./Run-OnAzureVM.ps1 -help
+```
+To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
+The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
+
+### Tear Down
+Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with one of:
+```
+az vm delete --name ml1
+az group delete --name ml1
+```
 
 # Option 1. Using Azure's managed infrastructure for ML training
 
@@ -54,47 +92,24 @@ az ml workspace delete -w ml1 -g ml1
 az group delete --name ml1
 ```
 
-# Option 2. Using a VM based on one of Microsoft's Data Science Virtual Machine images
-
-_*Required*_: `ssh` and some basic familiarity with it
-
-_NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
-```
-./Run-OnAzureVM.ps1 ml1 ml1 -location uksouth `
-        -gitRepository https://github.com/chrisfcarroll/TensorFlow-2.x-Tutorials `
-        -copyLocalFolder . `
-        -commandToRun "python TensorFlow-2.x-Tutorials/11-AE/ex11AutoEncoderMnist.py"  
-```
-- will create a `Resource Group` and a `Virtual Machine` both named ml1
-- will accept the license for the Data Science Virtual Machine image 
-- will clone the specified git repo to your home directory on the VM
-- will copy the local folder specified to your home directory on the VM
-- will run the given command
-
-_NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
-
-### Yes but what about … ?
-The script is intended to be simple. Use your own git repo or local folder, and specify your own `commandToRun`. Call the script with -? to see more options and more detail
-```
-./Run-OnAzureVM.ps1 -?
-```
-To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
-The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
-
-### Tear Down
-Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with one of:
-```
-az vm delete --name ml1
-az group delete --name ml1
-```
-
 # In More Detail
 
 Azure offers two approaches to cloud ML:
 1. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs. 
 2. Or, a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/). Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
 
-## Option 1. Using Azure's managed infrastructure for ML training
+## Option 1. Using an Azure Data Science Virtual Machine' image for ML training or work
+
+- Microsoft have published several “Data Science Virtual Machine” images. The script uses one recommended for CUDA which is:
+`microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09`
+- The images are preloaded with python, R studio, and a shed-load of python ML frameworks.
+- The script defaults to VM size = NC6 which is the cheapset VM size with a GPU
+- Advantages of a VM over a computetarget: 
+  - Interactive as well as batch. You can SSH to the VM or connect from X-windows, so it's a desktop experience
+  - Often (in my experience) faster startup than a managed computetarget, and no waiting in a queue for resources
+- All the parameters `-gitRepository  -copyLocalFolder -commandToRun` will run with current directory as the Home directory, so copied or git-cloned folders can be referenced with a simple relative path, as in the example given above.
+
+## Option 2. Using Azure's managed infrastructure for ML training
 
 #### Resources created for managed ML
 
@@ -183,17 +198,6 @@ Creates:
   -a workspace named ml1 in that resourceGroup,
   -a computetarget ml1 of default size (nc6) in the workspace
 and then stops, telling you what else you must specify to proceed
-
-## Option 2. Using an Azure Data Science Virtual Machine' image for ML training or work
-
-- Microsoft have published several “Data Science Virtual Machine” images. The script uses one recommended for CUDA which is:
-`microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09`
-- The images are preloaded with python, R studio, and a shed-load of python ML frameworks.
-- The script defaults to VM size = NC6 which is the cheapset VM size with a GPU
-- Advantages of a VM over a computetarget: 
-  - Interactive as well as batch. You can SSH to the VM or connect from X-windows, so it's a desktop experience
-  - Often (in my experience) faster startup than a managed computetarget, and no waiting in a queue for resources
-- All the parameters `-gitRepository  -copyLocalFolder -commandToRun` will run with current directory as the Home directory, so copied or git-cloned folders can be referenced with a simple relative path, as in the example given above.
 
 ## Addenda
 
