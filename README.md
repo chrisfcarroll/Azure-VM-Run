@@ -29,6 +29,7 @@ _*Required*_: `ssh` and some basic familiarity with it
 
 ```
 Start-OnVM.ps1 somecommand     -copy . fetch . -location uksouth
+# or, name a python script:
 Start-OnVM.ps1 -python main.py -copy . fetch . -location uksouth
 ```
 
