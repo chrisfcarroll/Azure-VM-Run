@@ -103,19 +103,19 @@ Azure offers two viable approaches to cloud ML:
 1. A plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/) with NVida GPU acceleratora. Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
 2. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs, provide a shared workspace for data, results, and experiment history. 
 
-### Option 1. Using Microsoft's Data Science Virtual Machine' image for ML training or work
+### Option 1. Using Microsoft's Data Science Virtual Machine image for ML training or work
 Microsoft have published several “Data Science Virtual Machine” images. The recommended image runs on Ubuntu and has NVidia CUDA support and GPU management. 
-- The images are preloaded with python, R studio, and a shed-load of python ML frameworks.
+- The images are preloaded with python, R studio, and a load of python ML frameworks.
 - Pre-installed Conda environments are python 3.7 or 3.8 with tensorflow or pytorch
-- The script defaults to the cheapset VM size with a GPU
-- Advantages of a VM over a computetarget: 
+- The script defaults to the cheapest VM size with a GPU
+- Advantages of a VM over a computetarget:
   - Interactive as well as batch. You can SSH to the VM or connect from X-windows, so it's a desktop experience
   - Often (in my experience) faster startup than a managed computetarget, and no waiting in a queue for resources
-  -Almost certainly cheaper, possibly a lot cheaper. You only need the VM for runs, you take respponsibility for keeping copies of data, results and history.
+  -Usually cheaper, by a lot cheaper. You only need the VM for runs; you take responsibility for keeping copies of your data, results and history.
 
 ### Option 2. Using Azure's managed infrastructure for ML training
 
-The managed infrastructure product is more focussed on GUI than on scripting. To script successfully, you need to know exactly the sequence of resources you must create & tear down managed cloud-based ML resources.
+The managed infrastructure product is more focused on GUI than on scripting. To script successfully, you need to know exactly the sequence of resources you must create & tear down managed cloud-based ML resources.
 
 #### Resources created for managed ML
 <pre>
