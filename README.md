@@ -1,5 +1,5 @@
 # Azure VM Run
-## Create gpu powered machine learning resources on Azure and run scripts, from scratch, in 5 minutes
+## Run your scripts on gpu powered VMs & compute resources on Azure, from scratch, in 5 minutes
 ## `az vm` and `az ml compute` Quickstart
 
 ### Q: How can I *script* training runs to run on GPU-enabled computing on Azure?
@@ -8,11 +8,11 @@
 
 -   Use `az ml run submit-script` and learn about the sequence of 8
     (yes, eight) resources & files you will need to create before it works
--   Go old-school, create a VM, and send a repo and data to it over ssh
+-   Ccreate a VM, send a repo and data to it over ssh and copy the results back afterwards
 
 ### OR You Could:
 -   Use these two scripts to do either of those two tasks for you in 5 minutes
-    _and_ help you learn how it all worked at your leisure.
+    _and_ help you learn at your leisure how it all worked.
 
 #### *Required:*
 
@@ -23,7 +23,7 @@
 3. Step zero for both options is, [install the az cli, and login](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 
-# Option 1. Start-OnVM.ps1 using a Microsoft Data Science Virtual Machine image
+# Option 1. Virtual Machine with GPU and ML tooling
 
 _*Required*_: `ssh` and some basic familiarity with it
 
@@ -49,8 +49,9 @@ _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to 
 ### Yes but what about … ?
 See `Run-OnAzureVM.ps1 -help` for more options and details.
 
-To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
-The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
+To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, 
+your choice of unix shell, and/or `X-windows`. The GUI bells & whistles are portrayed at 
+https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
 
 ### Tear Down
 Keeping an N-series VM running may cost you $10-30 per day. Delete the whole resource group or just the VM with one of:
@@ -60,7 +61,7 @@ az group delete --name VMRun
 ```
 _Don't get stung! Check in your Azure portal that all resources have been deleted._
 
-# Option 2. Using Azure's managed infrastructure for ML training
+# Option 2. Azure's managed offering for ML
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
@@ -74,7 +75,7 @@ Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth `
 - will submit the script and stay attached, streaming the logs to your console. You can see progress and output at https://ml.azure.com or see status at `az ml run list`
 
 ### Yes but what about … ?
-The script can take you from the pre-canned example to defining your own datasets, using [other ML frameworks (TensorFlow etc)](https://github.com/chrisfcarroll/Azure-az-ml-cli-QuickStart/blob/master/helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md), specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and more detail.
+The script can take you from the pre-canned example to defining your own datasets, using [other ML frameworks (TensorFlow etc)](https:helpful-examples/All%20ML%20Curated%20Environments%20Summary%20as%20at%20September%202020.md), specifying a bigger computetarget size, etc. Call the script with `-?` to see more options and more detail.
 ```
 ./Run-OnAzureMLComputeTarget.ps1 -?
 ```
@@ -202,21 +203,23 @@ and then stops, telling you what else you must specify to proceed
 
 ## Addenda
 
-### Comments on Azure GPU options
+### Azure GPU options
 
-A computetarget is a VM or at least it is specified with a VM size. You'll want to be sure to use a VMSize that includes a GPU.
+A computetarget is a VM or at least it is specified with a VM size, so the machine and GPU options are the same for both options. You'll want to be sure to use a VMSize that includes a GPU.
 
 *TL;DR:* Use a N-series VM for the NVidia Tesla GPUs. 
-- The oldest hardware - NC series - now has 50% off promo options, but these seem not to be accessible for ML workspace setup. 
-- Note also that on a new account you may have to first request access to the larger VMs, which you can do via the GUI at https://ml.azure.com.
+- The oldest hardware - NC series - now has 50% off promo options
+- On a new account you may have to first request access to the larger VMs. You can do this via the GUI at https://ml.azure.com or via the URL you get in an error message telling you to request a quota change.
 
 Choose from 
-- $0.60 per hour for NC6Promo - Tesla K80 
+- $0.60 per hour for NC6Promo with Tesla K80 
 - $1.20-$2.50 per hour for NC12 or NC24 Promo - 2 or 4 x Tesla K80
   (2015 design, 2496 cores @ 560MHz-875MHz 24GB GDDR5)
 - $7-15 per hour for NC12v3 - NC24v3 - 2-4 x Tesla V100 
   (640TensorCores,5120Cuda Cores, 32-64GB HBM2 memory)
 
+- _Don't pay for dual or quad GPU machines unless your code can use them_
+- _You will have storage charges as well as VM charges. Bigger VMs have more expensive storage_
 
 * Tesla K80 : A 2014 Server Kepler design (One K80 = two GK210s each with 12GB GDDR5)
 * Tesla M60 : A 2015 Workstation GPU Maxwell design 
