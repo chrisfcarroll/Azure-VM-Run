@@ -1,6 +1,6 @@
 # Azure VM Run
 ## Run your scripts on gpu powered VMs & compute resources on Azure, from scratch, in 5 minutes
-## `az vm` and `az ml compute` Quickstart
+### `az vm` and `az ml compute` Quickstart
 
 ### Q: How can I *script* tasks to run on GPU-enabled computing on Azure?
 
@@ -8,7 +8,7 @@
 
 -   Use `az ml run submit-script` and learn about the sequence of 8
     (yes, eight) resources & files you will need to create before it works
--   Ccreate a VM, send a repo and data to it over ssh and copy the results back afterwards
+-   Create a VM, clone a repo and/or copy data to it over ssh, and copy the results back afterwards
 
 ### OR You Could:
 -   Use these two scripts to do either of those two tasks for you in 5 minutes
@@ -28,26 +28,27 @@
 _*Required*_: `ssh` and some basic familiarity with it
 
 ```
+Start-OnVM.ps1 somecommand     -copy . fetch . -location uksouth
 Start-OnVM.ps1 -python main.py -copy . fetch . -location uksouth
 ```
 
 - First creates or confirms the Azure resources required:
-  - a resourceGroup (default name VMRun) in Azure location uksouth
+  - a resource group (default name VMRun) in Azure location uksouth
   - a VM (default name DSVM)
-    - with default size : NC6_PROMO
-    - with default image : microsoft-dsvm:ubuntu-1804:1804
-    -accepts the license for the image
-    -sets the conda environment to python 3.7 with tensorflow
+    - with default size: NC6_PROMO
+    - with default image: microsoft-dsvm:ubuntu-1804:1804
+    - accepts the license for the image
+    - sets the conda environment to python 3.7 with tensorflow
 - Then
   - copies your current working directory (without subdirectories) to the VM
-  - runs the given command "python main.py" on the VM in a tmux session
-  - tails the command until you press Ctrl-C
+  - runs the given command on the VM in a tmux session
+  - tails the command until you press Ctrl+C
   - copies the VM's home folder back to your local current working directory
 
 _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
 
 ### Yes but what about … ?
-See `Start-OnVM.ps1 -help` for more options and details.
+See `Start-OnVM.ps1 -help` for more options and details including conda environments, pip, cloning repos, recursive copy and fetch etc.
 
 To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, 
 your choice of unix shell, and/or `X-windows`. The GUI bells & whistles are portrayed at 
@@ -98,8 +99,8 @@ _Don't get stung! Check in your Azure portal that all resources have been delete
 # In More Detail
 
 Azure offers two viable approaches to cloud ML:
-1. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs, provide a shared workspace for data, results, and experiment history. 
-2. Or, a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/) with NVida GPU acceleratora. Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
+1. A plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/) with NVida GPU acceleratora. Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
+2. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs, provide a shared workspace for data, results, and experiment history. 
 
 ### Option 1. Using Microsoft's Data Science Virtual Machine' image for ML training or work
 Microsoft have published several “Data Science Virtual Machine” images. The recommended image runs on Ubuntu and has NVidia CUDA support and GPU management. 
