@@ -10,6 +10,11 @@ Param(
   ##The command will be passed to bash, so if it is a python script then use e.g. "python script.py"
   [Parameter(Position=0)][string]$commandToRun,
 
+  ##Command to execute after copyFromLocal (if any) and after cloning gitRepository (if any)
+  ##The command will run in a detached tmux session and is taken to be a Python 
+  ##script which will be run with python -u
+  [Parameter(Position=0)][string]$pythonCommandToRun,
+
   ##Path of a folder or files on your local machine to copy to the VM.
   ##If -copyFromLocal is not simply a subdirectory of the current working folder then
   ##it will be copied to a folder under the home directory with the same name as the
@@ -96,14 +101,22 @@ Param(
     'microsoft-dsvm:ubuntu-1804:1804-gen2:20.07.06',
     'microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09',
     'microsoft-dsvm:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.02')]
-  [string]$imageUrn="microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09",
+  [string]$imageUrn='microsoft-dsvm:ubuntu-1804:1804:20.07.06',
 
 
   #Required. Name of the VM to create or confirm
   [string]$vmName='DSVM',
 
   ##Size of the VM to create
-  [ValidateSet('NC6','NC12','NC24','NC6V3','NC12V3','NC24V3','NC6_PROMO','NC12_PROMO','NC24_PROMO', 'NV4AS_V4', 'NV4AS_V4', 'NV8AS_V4', 'B1s')]
+  [ValidateSet(
+    "NV6", "NV12", "NV24",
+    "NV6_Promo", "NV12_Promo", "NV24_Promo",
+    "NC6", "NC12", "NC24", "NC24r",
+    "NC6_Promo", "NC12_Promo", "NC24_Promo", "NC24r_Promo",
+    "NV4as_v4", "NV8as_v4", "NV16as_v4", "NV32as_v4",
+    "NV6s_v2", "NV12s_v2", "NV24s_v2", "NV12s_v3", "NV24s_v3", "NV48s_v3",
+    "NC6s_v3", "NC12s_v3", "NC24rs_v3", "NC24s_v3",
+    'B1s')]
   [string]$vmSize='NC6_PROMO',
 
   ##Use this switch to avoid waiting to accept an image license you have already accepted
@@ -153,14 +166,15 @@ if($help)
 }
 
 $summaryHelp= -not $noConfirm -and -not $haltPrevious -and -not $resetCondaEnvironment `
-              -and -not ($resourceGroupName,$fetchOutput,$copyFromLocal,$commandToRun -gt " " )
+              -and -not ($resourceGroupName,$fetchOutput,$copyFromLocal,$commandToRun,$pythonCommandToRun -gt " " )
 
 if($summaryHelp){
 
   "
   Start-OnVM.ps1 runs a local command on an Azure VM. 
 
-  Start-OnVM.ps1  [[-commandToRun] `"String command and args`" ]
+  Start-OnVM.ps1  [[-commandToRun] `"String command and args`" ] 
+                  [[-pythonCommandToRun] `"String command and args`" ] 
                   [[-copyFromLocal] <LocalPath> [-recursiveCopy]] 
                   [[-fetchOutput] <Path> [-recursiveFetch]]
                   [-recursiveBothCopyAndFetch]
@@ -325,6 +339,13 @@ if($vmIp){
 
 }
 
+if($imageUrn -match '-gen2' -and -not ($vmSize -like '*v3') -and -not ($vmSize -like 'B*'))
+{
+  write-warning "You chose image=$imageUrn and VM Size=$vmSize but your image 
+  looks like it's a generation 2 name, and $vmSize may not support gen2.
+  NC v2 and v3, and NV v3 do support gen2."
+}
+
 # ----------------------------------------------------------------------------
 
 if(-not $vmIp){
@@ -463,40 +484,57 @@ if($haltPrevious){
 }
 
 # --------------------------------------------------------------------------
-if($commandToRun){
-
-  $logName= "$vmName-" + [DateTime]::Now.ToString('yyyyMMdd-HHmm-ssff') + '.log'
-
+$logName= "$vmName-" + [DateTime]::Now.ToString('yyyyMMdd-HHmm-ssff') + '.log'
+if($commandToRun -or $pythonCommandToRun){
   "
-  6. Run command $commandToRun in a tmux session ...
-
+  6. Run commands in a tmux session ...
+     $commandToRun 
+     $pythonCommandToRun
      Use tmux to create/detach from long running jobs.
-     To detach from the tmux session use the key sequence Ctrl-B d
-     To reattach to it, use:
+     Detach from the tmux session by using the key sequence Ctrl-B d
+     Reattach to its console with:
      > ssh azureuser@$vmIp -t tmux attach
-
   "
-  if($commandToRun -match "^\w+\.py( |$)"){
-    write-warning "Did you mean `"python [-u] $commandToRun`" rather than just $($commandToRun.split(" ")[0]) ?"
-  }elseif($commandToRun -match "^python \w+\.py( |$)"){
-    write-warning "hint: `"python -u ...`" instead of just `"python ...`" will give you a real-time view of output."
+
+  if($commandToRun)
+  {
+    if($commandToRun -match "^\w+\.py( |$)")
+    {
+      write-warning "Did you mean `"-pythonCommandToRun $commandToRun`" rather than `"-commandToRun ...`" ?"
+    }
+    elseif($commandToRun -match "^python \w+\.py( |$)")
+    {
+      write-warning "hint: `"python -u ...`" instead of just `"python ...`" will give you a real-time view of output."
+    }
+
+    #tmux bash <command> seems better than just tmux <command>, because it can run a full pipeline
+    $tmuxbashcommand= "bash -ilc `'$($commandToRun -replace '"','\"' -replace "'","\'") 2>&1 | tee -a $logName `'"
+    ssh -q azureuser@$vmIp -t tmux new-session -d $tmuxbashcommand
+    $sshOK += ,$(if($?){"✅ Ran command."}else{"❌ start command errored"})
+    $sshOK += ,"✅ Logging to : $logName"
   }
 
-  #tmux bash <command> seems better than just tmux <command>, because it can run a full pipeline
-  $tmuxbashcommand= "bash -ilc `'$($commandToRun -replace '"','\"' -replace "'","\'")` 2>&1 | tee -a $logName `'"
-  ssh -q azureuser@$vmIp -t tmux new-session -d $tmuxbashcommand
-  $sshOK += ,$(if($?){"✅ Ran command."}else{"❌ start command errored"})
-  $sshOK += ,"✅ Logging to : $logName"
+  if($pythonCommandToRun)
+  {
+    $tmuxbashpythoncommand= "bash -ilc `'python -u $($pythonCommandToRun -replace '"','\"' -replace "'","\'") 2>&1 | tee -a $logName `'"
+    ssh -q azureuser@$vmIp -t tmux new-session -d $tmuxbashpythoncommand
+    $sshOK += ,$(if($?){"✅ Ran python command."}else{"❌ start python command errored"})
+    $sshOK += ,"✅ Logging to : $logName"
+  }
 }
 
 #--------------------------------------------------------------------------
 if($logName)
 {
-  "Tailing the command. Press Ctrl-C to disconnect. To reattach use:
+  "
+  Tailing the command. Press Ctrl-C to disconnect. To reattach use:
   > ssh azureuser@$vmIp tail -f $logName
   "
   sleep 1
-  ssh -q azureuser@$vmIp tail -f $logName
+  try{ ssh -q azureuser@$vmIp tail -f $logName }
+  catch{"
+        (stopped tailing)
+        "}
 }
 
 # --------------------------------------------------------------------------
