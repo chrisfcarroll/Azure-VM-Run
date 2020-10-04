@@ -32,8 +32,8 @@ Start-OnVM.ps1 -python main.py -copy . fetch . -location uksouth
 ```
 
 - First creates or confirms the Azure resources required:
-  - a resourceGroup named VMRun in Azure location uksouth
-  - a VM named DSVM
+  - a resourceGroup (default name VMRun) in Azure location uksouth
+  - a VM (default name DSVM)
     - with default size : NC6_PROMO
     - with default image : microsoft-dsvm:ubuntu-1804:1804
     -accepts the license for the image
