@@ -1,5 +1,6 @@
-# Create Azure GPU machine learning resources and run scripts, from scratch, in 5 minutes
-## `az vm` and `az ml` Quickstart
+# Azure VM Run
+## Create gpu powered machine learning resources on Azure and run scripts, from scratch, in 5 minutes
+## `az vm` and `az ml compute` Quickstart
 
 ### Q: How can I *script* training runs to run on GPU-enabled computing on Azure?
 
@@ -22,48 +23,48 @@
 3. Step zero for both options is, [install the az cli, and login](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 
-# Option 1. Using a VM based on one of Microsoft's Data Science Virtual Machine images
+# Option 1. Start-OnVM.ps1 using a Microsoft Data Science Virtual Machine image
 
 _*Required*_: `ssh` and some basic familiarity with it
 
-_NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
 Start-OnVM.ps1 -python main.py -copy . fetch . -location uksouth
 ```
--First creates or confirms the Azure resources required:
-  -a resourceGroup named VMRun in Azure location uksouth
-  -a VM named DSVM
+
+- First creates or confirms the Azure resources required:
+  - a resourceGroup named VMRun in Azure location uksouth
+  - a VM named DSVM
     - with default size : NC6_PROMO
     - with default image : microsoft-dsvm:ubuntu-1804:1804
     -accepts the license for the image
     -sets the conda environment to python 3.7 with tensorflow
--Then
-  -copies your current working directory (without subdirectories) to the VM
-  -runs the given command "python main.py" on the VM in a tmux session
-  -tails the command until you press Ctrl-C
-  -copies the VM's home folder back to your local current working directory
+- Then
+  - copies your current working directory (without subdirectories) to the VM
+  - runs the given command "python main.py" on the VM in a tmux session
+  - tails the command until you press Ctrl-C
+  - copies the VM's home folder back to your local current working directory
 
 _NB At the point of connecting to a new VM, `ssh` will ask you if you are ok to connect to the new host_
 
 ### Yes but what about … ?
-```
-./Run-OnAzureVM.ps1 -help
-```
+See `Run-OnAzureVM.ps1 -help` for more options and details.
+
 To make good use of a VM to offload training, you will want to be familiar with `ssh`, `tmux`, your choice of unix shell, and/or `X-windows`.
 The GUI bells & whistles are depicted at https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/
 
 ### Tear Down
-Keeping a small VM running will cost you several cents per day. Delete the whole resource group or just the VM with one of:
+Keeping an N-series VM running may cost you $10-30 per day. Delete the whole resource group or just the VM with one of:
 ```
-az vm delete --name ml1
-az group delete --name ml1
+az vm delete --name DSVM
+az group delete --name VMRun
 ```
+_Don't get stung! Check in your Azure portal that all resources have been deleted._
 
-# Option 1. Using Azure's managed infrastructure for ML training
+# Option 2. Using Azure's managed infrastructure for ML training
 
 _NB to copy and paste into a non-powershell shell, replace the backtick line-continuation marks with backslash before pasting_
 ```
-./Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth `
+Run-OnAzureMLComputeTarget.ps1 ml1 ml1 ml1 ml1 -location uksouth `
         -environmentFor PyTorch `
         -submit `
         -NoConfirm
@@ -86,40 +87,40 @@ to see that what the script does appears as expected in your azure account,
 and to see experiment results.
 
 ### Tear Down
-Keeping a workspace will cost you about $1 per day. Delete the whole resource group or just the workspace with one of:
+Keeping a workspace running may cost $10-$30 or more per day. Delete the whole resource group or just the workspace with one of:
 ```
 az ml workspace delete -w ml1 -g ml1
 az group delete --name ml1
 ```
+_Don't get stung! Check in your Azure portal that all resources have been deleted._
 
 # In More Detail
 
-Azure offers two approaches to cloud ML:
-1. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs. 
-2. Or, a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/). Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
+Azure offers two viable approaches to cloud ML:
+1. A [managed service](https://azure.microsoft.com/en-gb/services/machine-learning/) with a “devops” style dashboard that can e.g. gather metrics from your training runs, provide a shared workspace for data, results, and experiment history. 
+2. Or, a plain [virtual machine](https://azure.microsoft.com/en-gb/services/virtual-machines/data-science-virtual-machines/) with NVida GPU acceleratora. Well, plainish: it's a complete graphical workstation with X-windows & R-studio etc etc, not just a command line with Anaconda and Python.
 
-## Option 1. Using an Azure Data Science Virtual Machine' image for ML training or work
-
-- Microsoft have published several “Data Science Virtual Machine” images. The script uses one recommended for CUDA which is:
-`microsoft-ads:linux-data-science-vm-ubuntu:linuxdsvmubuntu:20.01.09`
+### Option 1. Using Microsoft's Data Science Virtual Machine' image for ML training or work
+Microsoft have published several “Data Science Virtual Machine” images. The recommended image runs on Ubuntu and has NVidia CUDA support and GPU management. 
 - The images are preloaded with python, R studio, and a shed-load of python ML frameworks.
-- The script defaults to VM size = NC6 which is the cheapset VM size with a GPU
+- Pre-installed Conda environments are python 3.7 or 3.8 with tensorflow or pytorch
+- The script defaults to the cheapset VM size with a GPU
 - Advantages of a VM over a computetarget: 
   - Interactive as well as batch. You can SSH to the VM or connect from X-windows, so it's a desktop experience
   - Often (in my experience) faster startup than a managed computetarget, and no waiting in a queue for resources
-- All the parameters `-gitRepository  -copyLocalFolder -commandToRun` will run with current directory as the Home directory, so copied or git-cloned folders can be referenced with a simple relative path, as in the example given above.
+  -Almost certainly cheaper, possibly a lot cheaper. You only need the VM for runs, you take respponsibility for keeping copies of data, results and history.
 
-## Option 2. Using Azure's managed infrastructure for ML training
+### Option 2. Using Azure's managed infrastructure for ML training
+
+The managed infrastructure product is more focussed on GUI than on scripting. To script successfully, you need to know exactly the sequence of resources you must create & tear down managed cloud-based ML resources.
 
 #### Resources created for managed ML
-
-What is needed to create, use, & tear down managed cloud-based ML resources?
 <pre>
 [Azure Subscription]
   └── ResourceGroup (at a location) : keeps AZ resources together
       └── WorkSpace : keep your ML work and resources together
           ├── Computetarget (with a vmSize which may include GPU)
-          ├── Envionment (simplest option is an AzureML curated one)
+          ├── Environment (simplest option is an AzureML curated one)
           ├── Dataset(s) (optional)
           └── Experiment : Keep related runs together
               └── runconfig file
