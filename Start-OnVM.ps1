@@ -14,7 +14,7 @@ Param(
   ##and after commandToRun (if any).
   ##The command will run in a detached tmux session and is assumed to be a Python 
   ##script, which will be run with "python -u <pythonCommandToRun>"
-  [Parameter][string]$pythonCommandToRun,
+  [Parameter(Position=0)][string]$pythonCommandToRun,
 
   ##Path of a folder or files on your local machine to copy to the VM.
   ##scp is used, so scp's semantics are followed:
