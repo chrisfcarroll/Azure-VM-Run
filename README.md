@@ -20,7 +20,7 @@
    _NB This will work on a Free Tier subscriptions but provisioning will be slower
    and you won't have any GPU._
 2. [PowerShell](https://github.com/PowerShell/PowerShell)
-3. Step zero for both options is, [install the az cli, and login](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+3. [install the az cli, and login](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 
 # Option 1. Virtual Machine with GPU and ML tooling
