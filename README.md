@@ -29,11 +29,11 @@ _*Required*_: `ssh` and some basic familiarity with it
 
 ```
 Start-OnVM.ps1 somecommand     -copy . fetch . -location uksouth
-# or, name a python script:
+# or as an abbreviation for pythoners:
 Start-OnVM.ps1 -python main.py -copy . fetch . -location uksouth
 ```
 
-- First creates or confirms the Azure resources required:
+- The script will first create or confirm the Azure resources required:
   - a resource group (default name VMRun) in Azure location uksouth
   - a VM (default name DSVM)
     - with default size: NC6_PROMO
